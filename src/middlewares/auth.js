@@ -1,11 +1,5 @@
+import jwt from "jsonwebtoken";
 import { APP_CONFIG } from "../config/settings.js";
-
-const ensureAuth = (req, res, next) => {
-    if (!req.session.user) {
-        return res.redirect("/auth/sign-in");
-    }
-    next();
-};
 
 const ensureRole = (...roles) => (req, res, next) => {
     if (!req.session.user || !roles.includes(req.session.user.role)) {
@@ -36,4 +30,15 @@ const setSessionLocals = (req, res, next) => {
     next();
 };
 
-export { ensureAuth, ensureRole, redirectIfAuthenticated, noCacheAuth, setSessionLocals };
+const requireAuth = (req, res, next) => {
+    const token = req.cookies?.auth;
+    if (!token) return res.status(401).json({ error: "Unauthorized" });
+    try {
+        req.user = jwt.verify(token, process.env.JWT_SECRET);
+        next();
+    } catch {
+        res.status(401).json({ error: "Unauthorized" });
+    }
+};
+
+export { ensureRole, redirectIfAuthenticated, noCacheAuth, setSessionLocals, requireAuth };

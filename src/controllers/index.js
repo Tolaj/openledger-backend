@@ -1,0 +1,25 @@
+import { register, login, logout, session } from "./auth.controller.js";
+import { getMe, update as updateUser } from "./user.controller.js";
+import { getAll as getAllGroups, getOne as getOneGroup, create as createGroup, update as updateGroup, remove as removeGroup } from "./group.controller.js";
+import { getAll as getAllCategories, getOne as getOneCategory, create as createCategory, update as updateCategory, remove as removeCategory } from "./category.controller.js";
+import { getAll as getAllProducts, getOne as getOneProduct, create as createProduct, update as updateProduct, remove as removeProduct } from "./product.controller.js";
+import { getAll as getAllOrders, getOne as getOneOrder, create as createOrder, update as updateOrder, remove as removeOrder } from "./order.controller.js";
+import { getAll as getAllInventory, getOne as getOneInventory, upsert, update as updateInventory, remove as removeInventory } from "./inventory.controller.js";
+import { getAll as getAllWishlists, getOne as getOneWishlist, create as createWishlist, update as updateWishlist, remove as removeWishlist } from "./wishlist.controller.js";
+import { getAll as getAllTemplates, create as createTemplate, remove as removeTemplate } from "./template.controller.js";
+import { apply } from "./applyTemplate.controller.js";
+import { send, receive } from "./friend.controller.js";
+import { getCart, upsertCart, deleteCart } from "./cart.controller.js";
+
+export const authController = { register, login, logout, session };
+export const userController = { getMe, update: updateUser };
+export const groupController = { getAll: getAllGroups, getOne: getOneGroup, create: createGroup, update: updateGroup, remove: removeGroup };
+export const categoryController = { getAll: getAllCategories, getOne: getOneCategory, create: createCategory, update: updateCategory, remove: removeCategory };
+export const productController = { getAll: getAllProducts, getOne: getOneProduct, create: createProduct, update: updateProduct, remove: removeProduct };
+export const orderController = { getAll: getAllOrders, getOne: getOneOrder, create: createOrder, update: updateOrder, remove: removeOrder };
+export const inventoryController = { getAll: getAllInventory, getOne: getOneInventory, upsert, update: updateInventory, remove: removeInventory };
+export const wishlistController = { getAll: getAllWishlists, getOne: getOneWishlist, create: createWishlist, update: updateWishlist, remove: removeWishlist };
+export const templateController = { getAll: getAllTemplates, create: createTemplate, remove: removeTemplate };
+export const applyTemplateController = { apply };
+export const friendController = { send, receive };
+export const cartController = { getCart, upsertCart, deleteCart };

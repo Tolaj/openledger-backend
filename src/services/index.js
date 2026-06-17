@@ -1,0 +1,25 @@
+import { register, login, decodeSession } from "./auth.service.js";
+import { getMe, updateUser } from "./user.service.js";
+import { getAllGroups, getGroupById, createGroup, updateGroup, deleteGroup } from "./group.service.js";
+import { getAllCategories, getCategoryById, createCategory, updateCategory, deleteCategory } from "./category.service.js";
+import { getAllProducts, getProductById, createProduct, updateProduct, deleteProduct } from "./product.service.js";
+import { getAllOrders, getOrderById, createOrder, updateOrder, deleteOrder } from "./order.service.js";
+import { getAllInventory, getInventoryById, upsertInventory, updateInventory, deleteInventory } from "./inventory.service.js";
+import { getAllWishlists, getWishlistById, createWishlist, updateWishlist, deleteWishlist } from "./wishlist.service.js";
+import { getTemplates, createTemplate, deleteTemplate } from "./template.service.js";
+import { applyTemplate } from "./applyTemplate.service.js";
+import { sendFriendRequest, receiveFriendRequest } from "./friend.service.js";
+import { getCart, upsertCart, deleteCart } from "./cart.service.js";
+
+export const authService = { register, login, decodeSession };
+export const userService = { getMe, updateUser };
+export const groupService = { getAllGroups, getGroupById, createGroup, updateGroup, deleteGroup };
+export const categoryService = { getAllCategories, getCategoryById, createCategory, updateCategory, deleteCategory };
+export const productService = { getAllProducts, getProductById, createProduct, updateProduct, deleteProduct };
+export const orderService = { getAllOrders, getOrderById, createOrder, updateOrder, deleteOrder };
+export const inventoryService = { getAllInventory, getInventoryById, upsertInventory, updateInventory, deleteInventory };
+export const wishlistService = { getAllWishlists, getWishlistById, createWishlist, updateWishlist, deleteWishlist };
+export const templateService = { getTemplates, createTemplate, deleteTemplate };
+export const applyTemplateService = { applyTemplate };
+export const friendService = { sendFriendRequest, receiveFriendRequest };
+export const cartService = { getCart, upsertCart, deleteCart };

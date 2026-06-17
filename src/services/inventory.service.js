@@ -1,7 +1,14 @@
 import Inventory from "../models/inventory.model.js";
 import Group from "../models/group.model.js";
 
-export const getAllInventory = () => Inventory.find().populate("product").populate("splitAmong");
+export const getAllInventory = async (groupId) => {
+    if (!groupId) return Inventory.find().populate({ path: "product", populate: { path: "category" } }).populate("splitAmong");
+    const group = await Group.findById(groupId).select("inventories");
+    if (!group) return [];
+    return Inventory.find({ _id: { $in: group.inventories } })
+        .populate({ path: "product", populate: { path: "category" } })
+        .populate("splitAmong");
+};
 
 export const getInventoryById = async (id) => {
     const item = await Inventory.findById(id);
@@ -14,7 +21,8 @@ export const upsertInventory = async ({ inventoryData, groupId }) => {
     for (const item of inventoryData) {
         const existing = await Inventory.findOne({
             product: item.product,
-            splitAmong: item.splitAmong,
+            price: item.price,
+            splitAmong: { $size: item.splitAmong.length, $all: item.splitAmong },
         });
         if (existing) {
             existing.unit = item.unit;

@@ -12,6 +12,14 @@ import friendRoutes from "./friend.routes.js";
 import cartRoutes from "./cart.routes.js";
 
 const configRoutes = (app) => {
+    app.get("/", (req, res) => {
+        res.json({ message: "Welcome to the OpenLedger API" });
+    });
+
+    app.get("/health", (req, res) => {
+        res.json({ status: "ok", timestamp: new Date().toISOString() });
+    });
+
     app.use("/api/auth", authRoutes);
     app.use("/api/users", userRoutes);
     app.use("/api/groups", groupRoutes);

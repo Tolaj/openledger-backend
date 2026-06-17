@@ -1,7 +1,7 @@
 import { orderService } from "../services/index.js";
 
 export const getAll = async (req, res, next) => {
-    try { res.json(await orderService.getAllOrders()); } catch (err) { next(err); }
+    try { res.json(await orderService.getAllOrders(req.query.groupId)); } catch (err) { next(err); }
 };
 
 export const getOne = async (req, res, next) => {

@@ -24,7 +24,7 @@ const orderSchema = new mongoose.Schema(
     { timestamps: true }
 );
 
-orderSchema.pre("save", async function (next) {
+orderSchema.pre("save", async function () {
     const Product = mongoose.model("Product");
     for (const item of this.items) {
         const val = item.product;
@@ -36,7 +36,6 @@ orderSchema.pre("save", async function (next) {
             if (doc) item.product = doc;
         }
     }
-    next();
 });
 
 export default mongoose.model("Order", orderSchema);

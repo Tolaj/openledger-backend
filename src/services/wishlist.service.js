@@ -8,7 +8,13 @@ const populate = [
     { path: "items.splitAmong" },
 ];
 
-export const getAllWishlists = () => Wishlist.find().populate(populate);
+export const getAllWishlists = async (groupId) => {
+    if (groupId) {
+        const group = await Group.findById(groupId).select("wishlists").lean();
+        return Wishlist.find({ _id: { $in: group?.wishlists || [] } }).populate(populate);
+    }
+    return Wishlist.find().populate(populate);
+};
 
 export const getWishlistById = async (id) => {
     const wishlist = await Wishlist.findById(id).populate(populate);

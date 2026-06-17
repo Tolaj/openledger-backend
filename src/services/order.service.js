@@ -7,7 +7,13 @@ const populate = [
     { path: "items.splitAmong" },
 ];
 
-export const getAllOrders = () => Order.find().populate(populate);
+export const getAllOrders = async (groupId) => {
+    if (groupId) {
+        const group = await Group.findById(groupId).select("orders").lean();
+        return Order.find({ _id: { $in: group?.orders || [] } }).populate(populate);
+    }
+    return Order.find().populate(populate);
+};
 
 export const getOrderById = async (id) => {
     const order = await Order.findById(id).populate(populate);

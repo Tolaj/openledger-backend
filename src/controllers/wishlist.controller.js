@@ -1,7 +1,7 @@
 import { wishlistService } from "../services/index.js";
 
 export const getAll = async (req, res, next) => {
-    try { res.json(await wishlistService.getAllWishlists()); } catch (err) { next(err); }
+    try { res.json(await wishlistService.getAllWishlists(req.query.groupId)); } catch (err) { next(err); }
 };
 
 export const getOne = async (req, res, next) => {

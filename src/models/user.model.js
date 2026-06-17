@@ -22,13 +22,12 @@ const userSchema = new mongoose.Schema(
     { timestamps: true }
 );
 
-userSchema.pre("save", async function (next) {
+userSchema.pre("save", async function () {
     this.email = this.email.toLowerCase();
     if (this.isModified("password")) {
         this.password = await bcrypt.hash(this.password, 12);
     }
     this.$locals.isNew = this.isNew;
-    next();
 });
 
 userSchema.post("save", async function (doc) {

@@ -10,6 +10,8 @@ import { getTemplates, createTemplate, deleteTemplate } from "./template.service
 import { applyTemplate } from "./applyTemplate.service.js";
 import { sendFriendRequest, receiveFriendRequest } from "./friend.service.js";
 import { getCart, upsertCart, deleteCart } from "./cart.service.js";
+import { getAllFinance, getFinanceById, createFinance, updateFinance, deleteFinance, settleDebt, getSummary } from "./finance.service.js";
+import { getAllBudgets, getBudgetById, createBudget, updateBudget, deleteBudget } from "./budget.service.js";
 
 export const authService = { register, login, decodeSession };
 export const userService = { getMe, updateUser };
@@ -23,3 +25,5 @@ export const templateService = { getTemplates, createTemplate, deleteTemplate };
 export const applyTemplateService = { applyTemplate };
 export const friendService = { sendFriendRequest, receiveFriendRequest };
 export const cartService = { getCart, upsertCart, deleteCart };
+export const financeService = { getAllFinance, getFinanceById, createFinance, updateFinance, deleteFinance, settleDebt, getSummary };
+export const budgetService = { getAllBudgets, getBudgetById, createBudget, updateBudget, deleteBudget };

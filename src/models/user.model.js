@@ -18,6 +18,7 @@ const userSchema = new mongoose.Schema(
         friends: [friendSchema],
         groups: [{ type: mongoose.Schema.Types.ObjectId, ref: "Group" }],
         onboardingSeen: { type: Boolean, default: false },
+        currency: { type: String, default: "INR" },
     },
     { timestamps: true }
 );

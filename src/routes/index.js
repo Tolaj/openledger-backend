@@ -10,6 +10,8 @@ import templateRoutes from "./template.routes.js";
 import applyTemplateRoutes from "./applyTemplate.routes.js";
 import friendRoutes from "./friend.routes.js";
 import cartRoutes from "./cart.routes.js";
+import financeRoutes from "./finance.routes.js";
+import budgetRoutes from "./budget.routes.js";
 
 const configRoutes = (app) => {
     app.get("/", (req, res) => {
@@ -32,6 +34,8 @@ const configRoutes = (app) => {
     app.use("/api/apply-template", applyTemplateRoutes);
     app.use("/api/friends", friendRoutes);
     app.use("/api/carts", cartRoutes);
+    app.use("/api/finance", financeRoutes);
+    app.use("/api/budgets", budgetRoutes);
 
     app.use("/{*splat}", (req, res) => {
         res.status(404).json({ error: "Not Found" });

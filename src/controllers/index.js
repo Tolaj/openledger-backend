@@ -10,6 +10,8 @@ import { getAll as getAllTemplates, create as createTemplate, remove as removeTe
 import { apply } from "./applyTemplate.controller.js";
 import { send, receive } from "./friend.controller.js";
 import { getCart, upsertCart, deleteCart } from "./cart.controller.js";
+import { getAll as getAllFinance, getSummary, getOne as getOneFinance, create as createFinance, update as updateFinance, remove as removeFinance, settle } from "./finance.controller.js";
+import { getAll as getAllBudgets, getOne as getOneBudget, create as createBudget, update as updateBudget, remove as removeBudget } from "./budget.controller.js";
 
 export const authController = { register, login, logout, session };
 export const userController = { getMe, update: updateUser };
@@ -23,3 +25,5 @@ export const templateController = { getAll: getAllTemplates, create: createTempl
 export const applyTemplateController = { apply };
 export const friendController = { send, receive };
 export const cartController = { getCart, upsertCart, deleteCart };
+export const financeController = { getAll: getAllFinance, getSummary, getOne: getOneFinance, create: createFinance, update: updateFinance, remove: removeFinance, settle };
+export const budgetController = { getAll: getAllBudgets, getOne: getOneBudget, create: createBudget, update: updateBudget, remove: removeBudget };

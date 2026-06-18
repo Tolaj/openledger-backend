@@ -20,6 +20,7 @@ const orderSchema = new mongoose.Schema(
         createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
         paidBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
         items: [orderItemSchema],
+        financeEntryId: { type: mongoose.Schema.Types.ObjectId, ref: "Finance" },
     },
     { timestamps: true }
 );

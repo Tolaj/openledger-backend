@@ -1,5 +1,6 @@
 import Order from "../models/order.model.js";
 import Group from "../models/group.model.js";
+import Finance from "../models/finance.model.js";
 
 const populate = [
     { path: "paidBy" },
@@ -36,4 +37,8 @@ export const updateOrder = async (id, body) => {
 export const deleteOrder = async (id) => {
     const order = await Order.findByIdAndDelete(id);
     if (!order) throw Object.assign(new Error("Order not found"), { status: 404 });
+    // Delete linked finance entry if it exists
+    if (order.financeEntryId) {
+        await Finance.findByIdAndDelete(order.financeEntryId).catch(() => {});
+    }
 };

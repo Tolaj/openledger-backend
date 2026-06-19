@@ -9,6 +9,7 @@ const productSchema = new mongoose.Schema(
         description: { type: String },
         manufacturer: { type: String },
         inventory: { type: Boolean, default: false },
+        taxRate: { type: Number, default: 0 },
         fileUrl: { type: String },
     },
     { timestamps: true }

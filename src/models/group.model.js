@@ -3,6 +3,8 @@ import mongoose from "mongoose";
 const groupSchema = new mongoose.Schema(
     {
         name: { type: String, required: true },
+        displayName: { type: String },
+        type: { type: String, enum: ["personal", "business"], default: "personal" },
         members: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
         orders: [{ type: mongoose.Schema.Types.ObjectId, ref: "Order" }],
         wishlists: [{ type: mongoose.Schema.Types.ObjectId, ref: "Wishlist" }],

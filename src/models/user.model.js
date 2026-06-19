@@ -18,6 +18,9 @@ const userSchema = new mongoose.Schema(
         friends: [friendSchema],
         groups: [{ type: mongoose.Schema.Types.ObjectId, ref: "Group" }],
         onboardingSeen: { type: Boolean, default: false },
+        onboardingComplete: { type: Boolean, default: false },
+        accountType: { type: String, enum: ["personal", "business"], default: "personal" },
+        businessName: { type: String },
         currency: { type: String, default: "INR" },
     },
     { timestamps: true }
@@ -31,14 +34,7 @@ userSchema.pre("save", async function () {
     this.$locals.isNew = this.isNew;
 });
 
-userSchema.post("save", async function (doc) {
-    if (!doc.$locals?.isNew) return;
-    const Group = mongoose.model("Group");
-    const group = new Group({ name: "ISOLATED_GROUP", members: [doc._id] });
-    group.$locals = { isNew: true };
-    const saved = await group.save();
-    await mongoose.model("User").updateOne({ _id: doc._id }, { $push: { groups: saved._id } });
-});
+// No auto-group on registration — the first group is created during onboarding.
 
 userSchema.methods.comparePassword = function (candidate) {
     return bcrypt.compare(candidate, this.password);

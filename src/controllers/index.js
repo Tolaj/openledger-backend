@@ -1,6 +1,6 @@
 import { register, login, logout, session } from "./auth.controller.js";
 import { getMe, update as updateUser } from "./user.controller.js";
-import { getAll as getAllGroups, getOne as getOneGroup, create as createGroup, update as updateGroup, remove as removeGroup } from "./group.controller.js";
+import { getAll as getAllGroups, getOne as getOneGroup, create as createGroup, update as updateGroup, remove as removeGroup, setup as setupGroup } from "./group.controller.js";
 import { getAll as getAllCategories, getOne as getOneCategory, create as createCategory, update as updateCategory, remove as removeCategory } from "./category.controller.js";
 import { getAll as getAllProducts, getOne as getOneProduct, create as createProduct, update as updateProduct, remove as removeProduct } from "./product.controller.js";
 import { getAll as getAllOrders, getOne as getOneOrder, create as createOrder, update as updateOrder, remove as removeOrder } from "./order.controller.js";
@@ -15,7 +15,7 @@ import { getAll as getAllBudgets, getOne as getOneBudget, create as createBudget
 
 export const authController = { register, login, logout, session };
 export const userController = { getMe, update: updateUser };
-export const groupController = { getAll: getAllGroups, getOne: getOneGroup, create: createGroup, update: updateGroup, remove: removeGroup };
+export const groupController = { getAll: getAllGroups, getOne: getOneGroup, create: createGroup, update: updateGroup, remove: removeGroup, setup: setupGroup };
 export const categoryController = { getAll: getAllCategories, getOne: getOneCategory, create: createCategory, update: updateCategory, remove: removeCategory };
 export const productController = { getAll: getAllProducts, getOne: getOneProduct, create: createProduct, update: updateProduct, remove: removeProduct };
 export const orderController = { getAll: getAllOrders, getOne: getOneOrder, create: createOrder, update: updateOrder, remove: removeOrder };

@@ -22,6 +22,25 @@ const configRoutes = (app) => {
         res.json({ status: "ok", timestamp: new Date().toISOString() });
     });
 
+    // Exchange rate proxy — avoids CORS issues fetching rates from the browser
+    // Uses open.er-api.com (free, no key, reliable)
+    app.get("/api/exchange-rate", async (req, res) => {
+        const { from, to } = req.query
+        if (!from || !to) return res.status(400).json({ error: "from and to are required" })
+        if (from === to) return res.json({ rate: 1 })
+        try {
+            const r = await fetch(`https://open.er-api.com/v6/latest/${from.toUpperCase()}`)
+            if (!r.ok) throw new Error(`Exchange API responded ${r.status}`)
+            const data = await r.json()
+            if (data.result !== "success") throw new Error(data["error-type"] || "API error")
+            const rate = data.rates?.[to.toUpperCase()]
+            if (!rate) throw new Error(`Currency ${to} not supported`)
+            res.json({ rate })
+        } catch (err) {
+            res.status(502).json({ error: err.message || "Failed to fetch exchange rate" })
+        }
+    })
+
     app.use("/api/auth", authRoutes);
     app.use("/api/users", userRoutes);
     app.use("/api/groups", groupRoutes);

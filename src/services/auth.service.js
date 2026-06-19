@@ -4,7 +4,7 @@ import User from "../models/user.model.js";
 const signToken = (user) =>
     jwt.sign({ id: user._id, email: user.email }, process.env.JWT_SECRET, { expiresIn: "7d" });
 
-export const register = async ({ name, email, password }) => {
+export const register = async ({ name, email, password, country, currency }) => {
     if (!name || !email || !password)
         throw Object.assign(new Error("name, email, and password are required"), { status: 400 });
 
@@ -12,7 +12,11 @@ export const register = async ({ name, email, password }) => {
     if (existing)
         throw Object.assign(new Error("Email already in use"), { status: 400 });
 
-    const user = await new User({ name, email, password }).save();
+    const user = await new User({
+        name, email, password,
+        ...(country && { country }),
+        ...(currency && { currency }),
+    }).save();
     return { token: signToken(user), user };
 };
 

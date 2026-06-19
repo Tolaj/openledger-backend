@@ -19,3 +19,17 @@ export const update = async (req, res, next) => {
 export const remove = async (req, res, next) => {
     try { await productService.deleteProduct(req.params.id); res.json({ message: "Product deleted" }); } catch (err) { next(err); }
 };
+
+export const convertCurrency = async (req, res, next) => {
+    try {
+        const { rate } = req.body
+        if (!rate || isNaN(rate) || rate <= 0) {
+            return res.status(400).json({ error: "Invalid rate" })
+        }
+        const result = await productService.convertGroupPrices(req.user.id, parseFloat(rate))
+        res.json(result)
+    } catch (err) {
+        console.error("convertCurrency error:", err)
+        next(err)
+    }
+};

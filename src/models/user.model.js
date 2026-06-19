@@ -22,6 +22,7 @@ const userSchema = new mongoose.Schema(
         accountType: { type: String, enum: ["personal", "business"], default: "personal" },
         businessName: { type: String },
         currency: { type: String, default: "INR" },
+        country: { type: String, default: "IN" },
     },
     { timestamps: true }
 );

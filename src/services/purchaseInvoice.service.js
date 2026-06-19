@@ -2,6 +2,7 @@ import PurchaseInvoice from "../models/purchaseInvoice.model.js";
 import GRN from "../models/grn.model.js";
 import PurchaseOrder from "../models/purchaseOrder.model.js";
 import Counter from "../models/counter.model.js";
+import Finance from "../models/finance.model.js";
 
 const nextInvoiceNumber = async (groupId) => {
     const counter = await Counter.findOneAndUpdate(
@@ -96,16 +97,36 @@ export const createPurchaseInvoice = async (body) => {
 };
 
 export const updatePurchaseInvoice = async (id, groupId, data) => {
+    const existing = await PurchaseInvoice.findOne({ _id: id, group: groupId }).populate("vendor", "name");
+    if (!existing) throw Object.assign(new Error("Purchase invoice not found"), { status: 404 });
+
     const inv = await PurchaseInvoice.findOneAndUpdate(
         { _id: id, group: groupId },
         data,
         { new: true }
     );
-    if (!inv) throw Object.assign(new Error("Purchase invoice not found"), { status: 404 });
+
+    // Auto-create expense Finance entry when invoice is marked paid
+    if (data.status === "paid" && existing.status !== "paid" && !existing.financeEntryId) {
+        const entry = await new Finance({
+            type:        "expense",
+            amount:      existing.grandTotal,
+            description: `${existing.invoiceNumber}${existing.vendor?.name ? " — " + existing.vendor.name : ""}`,
+            date:        new Date(),
+            group:       groupId,
+            user:        existing.createdBy,
+        }).save();
+        inv.financeEntryId = entry._id;
+        await inv.save();
+    }
+
     return inv;
 };
 
 export const deletePurchaseInvoice = async (id, groupId) => {
     const inv = await PurchaseInvoice.findOneAndDelete({ _id: id, group: groupId });
     if (!inv) throw Object.assign(new Error("Purchase invoice not found"), { status: 404 });
+    if (inv.financeEntryId) {
+        await Finance.findByIdAndDelete(inv.financeEntryId).catch(() => {});
+    }
 };

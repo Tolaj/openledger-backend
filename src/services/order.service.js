@@ -25,12 +25,39 @@ export const getOrderById = async (id) => {
 export const createOrder = async (body) => {
     const order = await new Order(body).save();
     await Group.updateOne({ _id: body.groupId }, { $addToSet: { orders: order._id } });
+
+    // Auto-create expense Finance entry for every order
+    const financeEntry = await new Finance({
+        type:        "expense",
+        amount:      parseFloat(order.totalPrice) || 0,
+        description: order.name,
+        date:        order.date ? new Date(order.date) : new Date(),
+        group:       body.groupId,
+        user:        body.createdBy,
+        paidBy:      body.paidBy,
+    }).save();
+
+    order.financeEntryId = financeEntry._id;
+    await order.save();
+
     return order;
 };
 
 export const updateOrder = async (id, body) => {
+    const existing = await Order.findById(id);
+    if (!existing) throw Object.assign(new Error("Order not found"), { status: 404 });
+
     const order = await Order.findByIdAndUpdate(id, body, { new: true });
-    if (!order) throw Object.assign(new Error("Order not found"), { status: 404 });
+
+    // Sync Finance entry if total price or name changed
+    if (existing.financeEntryId && (body.totalPrice !== undefined || body.name !== undefined)) {
+        await Finance.findByIdAndUpdate(existing.financeEntryId, {
+            ...(body.totalPrice !== undefined ? { amount: parseFloat(body.totalPrice) || 0 } : {}),
+            ...(body.name       !== undefined ? { description: body.name } : {}),
+            ...(body.date       !== undefined ? { date: new Date(body.date) } : {}),
+        }).catch(() => {});
+    }
+
     return order;
 };
 

@@ -29,6 +29,7 @@ const purchaseInvoiceSchema = new mongoose.Schema(
         dueDate:        { type: Date },
         notes:          { type: String },
         createdBy:      { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+        financeEntryId: { type: mongoose.Schema.Types.ObjectId, ref: "Finance" },
     },
     { timestamps: true }
 );

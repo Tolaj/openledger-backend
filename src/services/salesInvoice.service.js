@@ -2,6 +2,7 @@ import SalesInvoice from "../models/salesInvoice.model.js";
 import Delivery from "../models/delivery.model.js";
 import SalesOrder from "../models/salesOrder.model.js";
 import Counter from "../models/counter.model.js";
+import Finance from "../models/finance.model.js";
 
 const nextInvoiceNumber = async (groupId) => {
     const counter = await Counter.findOneAndUpdate(
@@ -95,16 +96,36 @@ export const createSalesInvoice = async (body) => {
 };
 
 export const updateSalesInvoice = async (id, groupId, data) => {
+    const existing = await SalesInvoice.findOne({ _id: id, group: groupId }).populate("customer", "name");
+    if (!existing) throw Object.assign(new Error("Sales invoice not found"), { status: 404 });
+
     const inv = await SalesInvoice.findOneAndUpdate(
         { _id: id, group: groupId },
         data,
         { new: true }
     );
-    if (!inv) throw Object.assign(new Error("Sales invoice not found"), { status: 404 });
+
+    // Auto-create income Finance entry when invoice is marked paid
+    if (data.status === "paid" && existing.status !== "paid" && !existing.financeEntryId) {
+        const entry = await new Finance({
+            type:        "income",
+            amount:      existing.grandTotal,
+            description: `${existing.invoiceNumber}${existing.customer?.name ? " — " + existing.customer.name : ""}`,
+            date:        new Date(),
+            group:       groupId,
+            user:        existing.createdBy,
+        }).save();
+        inv.financeEntryId = entry._id;
+        await inv.save();
+    }
+
     return inv;
 };
 
 export const deleteSalesInvoice = async (id, groupId) => {
     const inv = await SalesInvoice.findOneAndDelete({ _id: id, group: groupId });
     if (!inv) throw Object.assign(new Error("Sales invoice not found"), { status: 404 });
+    if (inv.financeEntryId) {
+        await Finance.findByIdAndDelete(inv.financeEntryId).catch(() => {});
+    }
 };

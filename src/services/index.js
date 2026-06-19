@@ -16,6 +16,10 @@ import { getAllVendors, getVendorById, createVendor, updateVendor, deleteVendor 
 import { getAllCustomers, getCustomerById, createCustomer, updateCustomer, deleteCustomer } from "./customer.service.js";
 import { getAllPurchaseOrders, getPurchaseOrderById, createPurchaseOrder, updatePurchaseOrder, deletePurchaseOrder } from "./purchaseOrder.service.js";
 import { getAllSalesOrders, getSalesOrderById, createSalesOrder, updateSalesOrder, deleteSalesOrder } from "./salesOrder.service.js";
+import { getAllGRNs, getGRNById, createGRN, deleteGRN } from "./grn.service.js";
+import { getAllDeliveries, getDeliveryById, createDelivery, deleteDelivery } from "./delivery.service.js";
+import { getAllPurchaseInvoices, getPurchaseInvoiceById, createPurchaseInvoice, updatePurchaseInvoice, deletePurchaseInvoice } from "./purchaseInvoice.service.js";
+import { getAllSalesInvoices, getSalesInvoiceById, createSalesInvoice, updateSalesInvoice, deleteSalesInvoice } from "./salesInvoice.service.js";
 
 export const authService = { register, login, decodeSession };
 export const userService = { getMe, updateUser };
@@ -35,3 +39,7 @@ export const vendorService = { getAllVendors, getVendorById, createVendor, updat
 export const customerService = { getAllCustomers, getCustomerById, createCustomer, updateCustomer, deleteCustomer };
 export const purchaseOrderService = { getAllPurchaseOrders, getPurchaseOrderById, createPurchaseOrder, updatePurchaseOrder, deletePurchaseOrder };
 export const salesOrderService = { getAllSalesOrders, getSalesOrderById, createSalesOrder, updateSalesOrder, deleteSalesOrder };
+export const grnService = { getAllGRNs, getGRNById, createGRN, deleteGRN };
+export const deliveryService = { getAllDeliveries, getDeliveryById, createDelivery, deleteDelivery };
+export const purchaseInvoiceService = { getAllPurchaseInvoices, getPurchaseInvoiceById, createPurchaseInvoice, updatePurchaseInvoice, deletePurchaseInvoice };
+export const salesInvoiceService = { getAllSalesInvoices, getSalesInvoiceById, createSalesInvoice, updateSalesInvoice, deleteSalesInvoice };

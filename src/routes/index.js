@@ -16,6 +16,10 @@ import vendorRoutes from "./vendor.routes.js";
 import customerRoutes from "./customer.routes.js";
 import purchaseOrderRoutes from "./purchaseOrder.routes.js";
 import salesOrderRoutes from "./salesOrder.routes.js";
+import grnRoutes from "./grn.routes.js";
+import deliveryRoutes from "./delivery.routes.js";
+import purchaseInvoiceRoutes from "./purchaseInvoice.routes.js";
+import salesInvoiceRoutes from "./salesInvoice.routes.js";
 
 const configRoutes = (app) => {
     app.get("/", (req, res) => {
@@ -63,6 +67,10 @@ const configRoutes = (app) => {
     app.use("/api/customers", customerRoutes);
     app.use("/api/purchase-orders", purchaseOrderRoutes);
     app.use("/api/sales-orders", salesOrderRoutes);
+    app.use("/api/grns", grnRoutes);
+    app.use("/api/deliveries", deliveryRoutes);
+    app.use("/api/purchase-invoices", purchaseInvoiceRoutes);
+    app.use("/api/sales-invoices", salesInvoiceRoutes);
 
     app.use("/{*splat}", (req, res) => {
         res.status(404).json({ error: "Not Found" });

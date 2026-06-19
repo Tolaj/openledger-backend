@@ -1,0 +1,29 @@
+import { deliveryService } from "../services/index.js";
+
+export const deliveryController = {
+    getAll: async (req, res, next) => {
+        try {
+            res.json(await deliveryService.getAllDeliveries(req.query.groupId));
+        } catch (err) { next(err); }
+    },
+    getOne: async (req, res, next) => {
+        try {
+            res.json(await deliveryService.getDeliveryById(req.params.id, req.query.groupId));
+        } catch (err) { next(err); }
+    },
+    create: async (req, res, next) => {
+        try {
+            res.status(201).json(await deliveryService.createDelivery({
+                ...req.body,
+                group: req.query.groupId,
+                createdBy: req.user.id,
+            }));
+        } catch (err) { next(err); }
+    },
+    remove: async (req, res, next) => {
+        try {
+            await deliveryService.deleteDelivery(req.params.id, req.query.groupId);
+            res.json({ message: "Delivery deleted" });
+        } catch (err) { next(err); }
+    },
+};

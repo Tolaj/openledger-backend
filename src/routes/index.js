@@ -12,6 +12,10 @@ import friendRoutes from "./friend.routes.js";
 import cartRoutes from "./cart.routes.js";
 import financeRoutes from "./finance.routes.js";
 import budgetRoutes from "./budget.routes.js";
+import vendorRoutes from "./vendor.routes.js";
+import customerRoutes from "./customer.routes.js";
+import purchaseOrderRoutes from "./purchaseOrder.routes.js";
+import salesOrderRoutes from "./salesOrder.routes.js";
 
 const configRoutes = (app) => {
     app.get("/", (req, res) => {
@@ -55,6 +59,10 @@ const configRoutes = (app) => {
     app.use("/api/carts", cartRoutes);
     app.use("/api/finance", financeRoutes);
     app.use("/api/budgets", budgetRoutes);
+    app.use("/api/vendors", vendorRoutes);
+    app.use("/api/customers", customerRoutes);
+    app.use("/api/purchase-orders", purchaseOrderRoutes);
+    app.use("/api/sales-orders", salesOrderRoutes);
 
     app.use("/{*splat}", (req, res) => {
         res.status(404).json({ error: "Not Found" });

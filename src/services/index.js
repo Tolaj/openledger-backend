@@ -12,6 +12,10 @@ import { sendFriendRequest, receiveFriendRequest } from "./friend.service.js";
 import { getCart, upsertCart, deleteCart } from "./cart.service.js";
 import { getAllFinance, getFinanceById, createFinance, updateFinance, deleteFinance, settleDebt, getSummary } from "./finance.service.js";
 import { getAllBudgets, getBudgetById, createBudget, updateBudget, deleteBudget } from "./budget.service.js";
+import { getAllVendors, getVendorById, createVendor, updateVendor, deleteVendor } from "./vendor.service.js";
+import { getAllCustomers, getCustomerById, createCustomer, updateCustomer, deleteCustomer } from "./customer.service.js";
+import { getAllPurchaseOrders, getPurchaseOrderById, createPurchaseOrder, updatePurchaseOrder, deletePurchaseOrder } from "./purchaseOrder.service.js";
+import { getAllSalesOrders, getSalesOrderById, createSalesOrder, updateSalesOrder, deleteSalesOrder } from "./salesOrder.service.js";
 
 export const authService = { register, login, decodeSession };
 export const userService = { getMe, updateUser };
@@ -27,3 +31,7 @@ export const friendService = { sendFriendRequest, receiveFriendRequest };
 export const cartService = { getCart, upsertCart, deleteCart };
 export const financeService = { getAllFinance, getFinanceById, createFinance, updateFinance, deleteFinance, settleDebt, getSummary };
 export const budgetService = { getAllBudgets, getBudgetById, createBudget, updateBudget, deleteBudget };
+export const vendorService = { getAllVendors, getVendorById, createVendor, updateVendor, deleteVendor };
+export const customerService = { getAllCustomers, getCustomerById, createCustomer, updateCustomer, deleteCustomer };
+export const purchaseOrderService = { getAllPurchaseOrders, getPurchaseOrderById, createPurchaseOrder, updatePurchaseOrder, deletePurchaseOrder };
+export const salesOrderService = { getAllSalesOrders, getSalesOrderById, createSalesOrder, updateSalesOrder, deleteSalesOrder };

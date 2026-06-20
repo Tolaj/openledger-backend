@@ -110,14 +110,19 @@ export const updatePurchaseInvoice = async (id, groupId, data) => {
     if (data.status === "paid" && existing.status !== "paid" && !existing.financeEntryId) {
         // Populate product with category for line items
         const populated = await PurchaseInvoice.findById(existing._id)
-            .populate("items.product", "name category");
+            .populate({ path: "items.product", populate: { path: "category", select: "_id name" } });
 
         const financeItems = (populated?.items || []).map((it) => ({
             name:     it.product?.name || it.description || "Item",
             qty:      it.qty || 1,
             amount:   it.amount || 0,
-            category: it.product?.category || undefined,
+            category: it.product?.category?._id || it.product?.category || undefined,
         }));
+
+        // Set top-level category if all items share the same category
+        const itemCategories = financeItems.map((it) => it.category?.toString()).filter(Boolean);
+        const uniqueCategories = [...new Set(itemCategories)];
+        const topCategory = uniqueCategories.length === 1 ? uniqueCategories[0] : undefined;
 
         const entry = await new Finance({
             type:        "expense",
@@ -126,6 +131,7 @@ export const updatePurchaseInvoice = async (id, groupId, data) => {
             date:        new Date(),
             group:       groupId,
             user:        existing.createdBy,
+            category:    topCategory,
             items:       financeItems,
         }).save();
         inv.financeEntryId = entry._id;

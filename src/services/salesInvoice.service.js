@@ -18,7 +18,7 @@ const populateInvoice = (query) =>
         .populate({ path: "customer", select: "name" })
         .populate({ path: "salesOrder", select: "soNumber" })
         .populate({ path: "delivery", select: "deliveryNumber" })
-        .populate("items.product", "name unit");
+        .populate({ path: "items.product", select: "name unit", populate: { path: "category", select: "name icon" } });
 
 export const getAllSalesInvoices = (groupId) =>
     populateInvoice(
@@ -107,6 +107,17 @@ export const updateSalesInvoice = async (id, groupId, data) => {
 
     // Auto-create income Finance entry when invoice is marked paid
     if (data.status === "paid" && existing.status !== "paid" && !existing.financeEntryId) {
+        // Populate product with category for line items
+        const populated = await SalesInvoice.findById(existing._id)
+            .populate("items.product", "name category");
+
+        const financeItems = (populated?.items || []).map((it) => ({
+            name:     it.product?.name || it.description || "Item",
+            qty:      it.qty || 1,
+            amount:   it.amount || 0,
+            category: it.product?.category || undefined,
+        }));
+
         const entry = await new Finance({
             type:        "income",
             amount:      existing.grandTotal,
@@ -114,6 +125,7 @@ export const updateSalesInvoice = async (id, groupId, data) => {
             date:        new Date(),
             group:       groupId,
             user:        existing.createdBy,
+            items:       financeItems,
         }).save();
         inv.financeEntryId = entry._id;
         await inv.save();

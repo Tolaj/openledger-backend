@@ -26,6 +26,14 @@ export const createOrder = async (body) => {
     const order = await new Order(body).save();
     await Group.updateOne({ _id: body.groupId }, { $addToSet: { orders: order._id } });
 
+    // Build line items for Finance from order items (product is already denormalized)
+    const financeItems = (order.items || []).map((it) => ({
+        name:     it.product?.name || "Item",
+        qty:      parseFloat(it.count) || 1,
+        amount:   parseFloat(it.price) * (parseFloat(it.count) || 1),
+        category: it.product?.category || undefined,
+    }));
+
     // Auto-create expense Finance entry for every order
     const financeEntry = await new Finance({
         type:        "expense",
@@ -35,6 +43,7 @@ export const createOrder = async (body) => {
         group:       body.groupId,
         user:        body.createdBy,
         paidBy:      body.paidBy,
+        items:       financeItems,
     }).save();
 
     order.financeEntryId = financeEntry._id;

@@ -3,10 +3,11 @@ import Finance from "../models/finance.model.js";
 const populate = [
     { path: "paidBy", select: "name email" },
     { path: "user",   select: "name email" },
-    { path: "category", select: "name" },
+    { path: "category", select: "name icon" },
     { path: "splitAmong.user", select: "name email" },
     { path: "debtTracking.from", select: "name email" },
     { path: "debtTracking.to",   select: "name email" },
+    { path: "items.category", select: "name icon" },
 ];
 
 export const getAllFinance = async ({ groupId, type, startDate, endDate }) => {

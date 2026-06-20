@@ -24,6 +24,7 @@ import recipientRoutes from "./recipient.routes.js";
 import generalOrderRoutes from "./generalOrder.routes.js";
 import generalInvoiceRoutes from "./generalInvoice.routes.js";
 import recurringRoutes from "./recurring.routes.js";
+import stockMovementRoutes from "./stockMovement.routes.js";
 
 const configRoutes = (app) => {
     app.get("/", (req, res) => {
@@ -79,6 +80,7 @@ const configRoutes = (app) => {
     app.use("/api/general-orders", generalOrderRoutes);
     app.use("/api/general-invoices", generalInvoiceRoutes);
     app.use("/api/recurring", recurringRoutes);
+    app.use("/api/stock-movements", stockMovementRoutes);
 
     app.use("/{*splat}", (req, res) => {
         res.status(404).json({ error: "Not Found" });

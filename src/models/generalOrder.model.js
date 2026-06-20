@@ -20,7 +20,7 @@ const generalOrderSchema = new mongoose.Schema(
         group:      { type: mongoose.Schema.Types.ObjectId, ref: "Group", required: true },
         // "payable" = we owe (expense direction), "receivable" = owed to us (income direction)
         direction:  { type: String, enum: ["payable", "receivable"], default: "payable" },
-        status:     { type: String, enum: ["draft", "confirmed", "cancelled"], default: "draft" },
+        status:     { type: String, enum: ["draft", "sent", "confirmed", "partial", "received", "delivered", "cancelled"], default: "draft" },
         items:      [goItemSchema],
         subtotal:   { type: Number, default: 0 },
         taxAmount:  { type: Number, default: 0 },

@@ -24,6 +24,7 @@ import { getAllRecipients, getRecipientById, createRecipient, updateRecipient, d
 import { getAllGeneralOrders, getGeneralOrderById, createGeneralOrder, updateGeneralOrder, deleteGeneralOrder } from "./generalOrder.service.js";
 import { getAllGeneralInvoices, getGeneralInvoiceById, createGeneralInvoice, updateGeneralInvoice, deleteGeneralInvoice } from "./generalInvoice.service.js";
 import { getAllRecurring, getRecurringById, createRecurring, updateRecurring, deleteRecurring } from "./recurring.service.js";
+import { getAllMovements, createAdjustment, writeMovement } from "./stockMovement.service.js";
 
 export const authService = { register, login, decodeSession };
 export const userService = { getMe, updateUser };
@@ -51,3 +52,4 @@ export const recipientService = { getAllRecipients, getRecipientById, createReci
 export const generalOrderService = { getAllGeneralOrders, getGeneralOrderById, createGeneralOrder, updateGeneralOrder, deleteGeneralOrder };
 export const generalInvoiceService = { getAllGeneralInvoices, getGeneralInvoiceById, createGeneralInvoice, updateGeneralInvoice, deleteGeneralInvoice };
 export const recurringService = { getAllRecurring, getRecurringById, createRecurring, updateRecurring, deleteRecurring };
+export const stockMovementService = { getAllMovements, createAdjustment, writeMovement };

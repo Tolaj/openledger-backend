@@ -2,6 +2,7 @@ import Delivery from "../models/delivery.model.js";
 import SalesOrder from "../models/salesOrder.model.js";
 import Inventory from "../models/inventory.model.js";
 import Counter from "../models/counter.model.js";
+import { writeMovement } from "./stockMovement.service.js";
 
 const nextDeliveryNumber = async (groupId) => {
     const counter = await Counter.findOneAndUpdate(
@@ -101,8 +102,20 @@ export const createDelivery = async (body) => {
         status: allFull ? "delivered" : "partial",
     });
 
-    // Stock OUT
+    // Stock OUT + movement records
     await updateStockOut(items);
+    for (const item of items) {
+        if (!item.product || item.qtyDelivered <= 0) continue;
+        await writeMovement({
+            group,
+            product: item.product,
+            change: -item.qtyDelivered,
+            sourceType: "delivery",
+            sourceRef: deliveryNumber,
+            sourceId: delivery._id,
+            createdBy,
+        });
+    }
 
     return Delivery.findById(delivery._id)
         .populate({ path: "salesOrder", select: "soNumber customer", populate: { path: "customer", select: "name" } })

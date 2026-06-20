@@ -3,6 +3,7 @@ import PurchaseOrder from "../models/purchaseOrder.model.js";
 import Inventory from "../models/inventory.model.js";
 import Group from "../models/group.model.js";
 import Counter from "../models/counter.model.js";
+import { writeMovement } from "./stockMovement.service.js";
 
 const nextGrnNumber = async (groupId) => {
     const counter = await Counter.findOneAndUpdate(
@@ -84,8 +85,20 @@ export const createGRN = async (body) => {
         status: allFull ? "received" : "partial",
     });
 
-    // Stock IN
+    // Stock IN + movement records
     await updateStockIn(items, group);
+    for (const item of items) {
+        if (!item.product || item.qtyReceived <= 0) continue;
+        await writeMovement({
+            group,
+            product: item.product,
+            change: item.qtyReceived,
+            sourceType: "grn",
+            sourceRef: grnNumber,
+            sourceId: grn._id,
+            createdBy,
+        });
+    }
 
     return GRN.findById(grn._id)
         .populate({ path: "purchaseOrder", select: "poNumber vendor", populate: { path: "vendor", select: "name" } })

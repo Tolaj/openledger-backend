@@ -56,12 +56,24 @@ export const createGRN = async (body) => {
     const po = await PurchaseOrder.findOne({ _id: poId, group });
     if (!po) throw Object.assign(new Error("Purchase order not found"), { status: 404 });
 
+    // Sum qty already received across all prior GRNs for this PO
+    const priorGRNs = await GRN.find({ purchaseOrder: poId, group });
+    const alreadyReceived = {}; // productId => totalQtyReceived so far
+    for (const g of priorGRNs) {
+        for (const it of g.items) {
+            const key = String(it.product || it.description);
+            alreadyReceived[key] = (alreadyReceived[key] || 0) + it.qtyReceived;
+        }
+    }
+
     const grnNumber = await nextGrnNumber(group);
 
-    // Determine status: partial if any item received less than ordered
-    const allFull = items.every((it) => {
-        const ordered = po.items.find((p) => String(p.product) === String(it.product))?.qty ?? it.qtyOrdered;
-        return it.qtyReceived >= ordered;
+    // Determine if PO is now fully received (cumulative across all GRNs including this one)
+    const allFull = po.items.every((poItem) => {
+        const key = String(poItem.product);
+        const previouslyReceived = alreadyReceived[key] || 0;
+        const thisReceipt = items.find((it) => String(it.product) === key)?.qtyReceived || 0;
+        return previouslyReceived + thisReceipt >= poItem.qty;
     });
 
     const grn = await new GRN({

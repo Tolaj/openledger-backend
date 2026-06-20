@@ -70,12 +70,24 @@ export const createDelivery = async (body) => {
     const so = await SalesOrder.findOne({ _id: soId, group });
     if (!so) throw Object.assign(new Error("Sales order not found"), { status: 404 });
 
+    // Sum qty already delivered across all prior deliveries for this SO
+    const priorDeliveries = await Delivery.find({ salesOrder: soId, group });
+    const alreadyDelivered = {};
+    for (const d of priorDeliveries) {
+        for (const it of d.items) {
+            const key = String(it.product || it.description);
+            alreadyDelivered[key] = (alreadyDelivered[key] || 0) + it.qtyDelivered;
+        }
+    }
+
     const deliveryNumber = await nextDeliveryNumber(group);
 
-    // Determine status: partial if any item delivered less than ordered
-    const allFull = items.every((it) => {
-        const ordered = so.items.find((s) => String(s.product) === String(it.product))?.qty ?? it.qtyOrdered;
-        return it.qtyDelivered >= ordered;
+    // Determine if SO is now fully delivered (cumulative across all deliveries including this one)
+    const allFull = so.items.every((soItem) => {
+        const key = String(soItem.product);
+        const previouslyDelivered = alreadyDelivered[key] || 0;
+        const thisDelivery = items.find((it) => String(it.product) === key)?.qtyDelivered || 0;
+        return previouslyDelivered + thisDelivery >= soItem.qty;
     });
 
     const delivery = await new Delivery({

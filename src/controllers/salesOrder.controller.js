@@ -27,4 +27,17 @@ export const salesOrderController = {
             res.json({ message: "Sales order deleted" });
         } catch (err) { next(err); }
     },
+    pdf: async (req, res, next) => {
+        try {
+            const { pdfBuffer, filename } = await salesOrderService.getSalesOrderPDF(req.params.id, req.query.groupId);
+            res.set({ "Content-Type": "application/pdf", "Content-Disposition": `${req.query.disposition || "inline"}; filename="${filename}"`, "Content-Length": pdfBuffer.length });
+            res.end(pdfBuffer);
+        } catch (err) { next(err); }
+    },
+    send: async (req, res, next) => {
+        try {
+            const so = await salesOrderService.sendSalesOrder(req.params.id, req.query.groupId, { recipientEmail: req.body.recipientEmail });
+            res.json(so);
+        } catch (err) { next(err); }
+    },
 };

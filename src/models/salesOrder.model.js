@@ -20,7 +20,7 @@ const salesOrderSchema = new mongoose.Schema(
         group:         { type: mongoose.Schema.Types.ObjectId, ref: "Group", required: true },
         status:        {
             type: String,
-            enum: ["draft", "confirmed", "partial", "delivered", "cancelled"],
+            enum: ["draft", "sent", "confirmed", "partial", "delivered", "cancelled"],
             default: "draft",
         },
         items:         [soItemSchema],

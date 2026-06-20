@@ -27,4 +27,27 @@ export const purchaseOrderController = {
             res.json({ message: "Purchase order deleted" });
         } catch (err) { next(err); }
     },
+    pdf: async (req, res, next) => {
+        try {
+            const { pdfBuffer, filename } = await purchaseOrderService.getPurchaseOrderPDF(
+                req.params.id, req.query.groupId
+            );
+            res.set({
+                "Content-Type": "application/pdf",
+                "Content-Disposition": `${req.query.disposition || "inline"}; filename="${filename}"`,
+                "Content-Length": pdfBuffer.length,
+            });
+            res.end(pdfBuffer);
+        } catch (err) { next(err); }
+    },
+    send: async (req, res, next) => {
+        try {
+            const po = await purchaseOrderService.sendPurchaseOrder(
+                req.params.id,
+                req.query.groupId,
+                { recipientEmail: req.body.recipientEmail }
+            );
+            res.json(po);
+        } catch (err) { next(err); }
+    },
 };

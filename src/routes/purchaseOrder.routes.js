@@ -8,6 +8,8 @@ router.use(requireAuth);
 router.get("/", purchaseOrderController.getAll);
 router.get("/:id", purchaseOrderController.getOne);
 router.post("/", purchaseOrderController.create);
+router.get("/:id/pdf", purchaseOrderController.pdf);
+router.post("/:id/send", purchaseOrderController.send);
 router.put("/:id", purchaseOrderController.update);
 router.delete("/:id", purchaseOrderController.remove);
 

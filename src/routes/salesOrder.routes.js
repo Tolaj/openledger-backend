@@ -7,7 +7,9 @@ router.use(requireAuth);
 
 router.get("/", salesOrderController.getAll);
 router.get("/:id", salesOrderController.getOne);
+router.get("/:id/pdf", salesOrderController.pdf);
 router.post("/", salesOrderController.create);
+router.post("/:id/send", salesOrderController.send);
 router.put("/:id", salesOrderController.update);
 router.delete("/:id", salesOrderController.remove);
 

@@ -14,8 +14,8 @@ import { getAllFinance, getFinanceById, createFinance, updateFinance, deleteFina
 import { getAllBudgets, getBudgetById, createBudget, updateBudget, deleteBudget } from "./budget.service.js";
 import { getAllVendors, getVendorById, createVendor, updateVendor, deleteVendor } from "./vendor.service.js";
 import { getAllCustomers, getCustomerById, createCustomer, updateCustomer, deleteCustomer } from "./customer.service.js";
-import { getAllPurchaseOrders, getPurchaseOrderById, createPurchaseOrder, updatePurchaseOrder, deletePurchaseOrder } from "./purchaseOrder.service.js";
-import { getAllSalesOrders, getSalesOrderById, createSalesOrder, updateSalesOrder, deleteSalesOrder } from "./salesOrder.service.js";
+import { getAllPurchaseOrders, getPurchaseOrderById, createPurchaseOrder, updatePurchaseOrder, deletePurchaseOrder, sendPurchaseOrder, getPurchaseOrderPDF } from "./purchaseOrder.service.js";
+import { getAllSalesOrders, getSalesOrderById, createSalesOrder, updateSalesOrder, deleteSalesOrder, getSalesOrderPDF, sendSalesOrder } from "./salesOrder.service.js";
 import { getAllGRNs, getGRNById, createGRN, deleteGRN } from "./grn.service.js";
 import { getAllDeliveries, getDeliveryById, createDelivery, deleteDelivery } from "./delivery.service.js";
 import { getAllPurchaseInvoices, getPurchaseInvoiceById, createPurchaseInvoice, updatePurchaseInvoice, deletePurchaseInvoice } from "./purchaseInvoice.service.js";
@@ -42,8 +42,8 @@ export const financeService = { getAllFinance, getFinanceById, createFinance, up
 export const budgetService = { getAllBudgets, getBudgetById, createBudget, updateBudget, deleteBudget };
 export const vendorService = { getAllVendors, getVendorById, createVendor, updateVendor, deleteVendor };
 export const customerService = { getAllCustomers, getCustomerById, createCustomer, updateCustomer, deleteCustomer };
-export const purchaseOrderService = { getAllPurchaseOrders, getPurchaseOrderById, createPurchaseOrder, updatePurchaseOrder, deletePurchaseOrder };
-export const salesOrderService = { getAllSalesOrders, getSalesOrderById, createSalesOrder, updateSalesOrder, deleteSalesOrder };
+export const purchaseOrderService = { getAllPurchaseOrders, getPurchaseOrderById, createPurchaseOrder, updatePurchaseOrder, deletePurchaseOrder, sendPurchaseOrder, getPurchaseOrderPDF };
+export const salesOrderService = { getAllSalesOrders, getSalesOrderById, createSalesOrder, updateSalesOrder, deleteSalesOrder, getSalesOrderPDF, sendSalesOrder };
 export const grnService = { getAllGRNs, getGRNById, createGRN, deleteGRN };
 export const deliveryService = { getAllDeliveries, getDeliveryById, createDelivery, deleteDelivery };
 export const purchaseInvoiceService = { getAllPurchaseInvoices, getPurchaseInvoiceById, createPurchaseInvoice, updatePurchaseInvoice, deletePurchaseInvoice };

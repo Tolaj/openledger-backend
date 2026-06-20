@@ -20,6 +20,10 @@ import { getAllGRNs, getGRNById, createGRN, deleteGRN } from "./grn.service.js";
 import { getAllDeliveries, getDeliveryById, createDelivery, deleteDelivery } from "./delivery.service.js";
 import { getAllPurchaseInvoices, getPurchaseInvoiceById, createPurchaseInvoice, updatePurchaseInvoice, deletePurchaseInvoice } from "./purchaseInvoice.service.js";
 import { getAllSalesInvoices, getSalesInvoiceById, createSalesInvoice, updateSalesInvoice, deleteSalesInvoice } from "./salesInvoice.service.js";
+import { getAllRecipients, getRecipientById, createRecipient, updateRecipient, deleteRecipient } from "./recipient.service.js";
+import { getAllGeneralOrders, getGeneralOrderById, createGeneralOrder, updateGeneralOrder, deleteGeneralOrder } from "./generalOrder.service.js";
+import { getAllGeneralInvoices, getGeneralInvoiceById, createGeneralInvoice, updateGeneralInvoice, deleteGeneralInvoice } from "./generalInvoice.service.js";
+import { getAllRecurring, getRecurringById, createRecurring, updateRecurring, deleteRecurring } from "./recurring.service.js";
 
 export const authService = { register, login, decodeSession };
 export const userService = { getMe, updateUser };
@@ -43,3 +47,7 @@ export const grnService = { getAllGRNs, getGRNById, createGRN, deleteGRN };
 export const deliveryService = { getAllDeliveries, getDeliveryById, createDelivery, deleteDelivery };
 export const purchaseInvoiceService = { getAllPurchaseInvoices, getPurchaseInvoiceById, createPurchaseInvoice, updatePurchaseInvoice, deletePurchaseInvoice };
 export const salesInvoiceService = { getAllSalesInvoices, getSalesInvoiceById, createSalesInvoice, updateSalesInvoice, deleteSalesInvoice };
+export const recipientService = { getAllRecipients, getRecipientById, createRecipient, updateRecipient, deleteRecipient };
+export const generalOrderService = { getAllGeneralOrders, getGeneralOrderById, createGeneralOrder, updateGeneralOrder, deleteGeneralOrder };
+export const generalInvoiceService = { getAllGeneralInvoices, getGeneralInvoiceById, createGeneralInvoice, updateGeneralInvoice, deleteGeneralInvoice };
+export const recurringService = { getAllRecurring, getRecurringById, createRecurring, updateRecurring, deleteRecurring };

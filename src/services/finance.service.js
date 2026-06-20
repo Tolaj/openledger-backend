@@ -40,10 +40,16 @@ export const createFinance = async (body) => {
             }
         }
     }
+    if (!body.paidBy)   delete body.paidBy;
+    if (!body.category) delete body.category;
+    if (!body.user)     delete body.user;
     return new Finance({ ...body, debtTracking }).save();
 };
 
 export const updateFinance = async (id, body) => {
+    if (!body.paidBy)   delete body.paidBy;
+    if (!body.category) delete body.category;
+    if (!body.user)     delete body.user;
     const entry = await Finance.findByIdAndUpdate(id, body, { new: true }).populate(populate);
     if (!entry) throw Object.assign(new Error("Finance entry not found"), { status: 404 });
     return entry;

@@ -1,4 +1,6 @@
 import SalesOrder from "../models/salesOrder.model.js";
+import Delivery from "../models/delivery.model.js";
+import SalesInvoice from "../models/salesInvoice.model.js";
 import Group from "../models/group.model.js";
 import Counter from "../models/counter.model.js";
 import { sendMail } from "../utils/mailer.js";
@@ -42,19 +44,33 @@ export const createSalesOrder = async (body) => {
 };
 
 export const updateSalesOrder = async (id, groupId, body) => {
+    const existing = await SalesOrder.findOne({ _id: id, group: groupId });
+    if (!existing) throw Object.assign(new Error("Sales order not found"), { status: 404 });
+
+    if (existing.status === "delivered" && body.status)
+        throw Object.assign(new Error("Cannot change status of a fully delivered sales order."), { status: 409 });
+
     const totals = body.items ? calcTotals(body.items) : {};
-    const so = await SalesOrder.findOneAndUpdate(
+    return SalesOrder.findOneAndUpdate(
         { _id: id, group: groupId },
         { ...body, ...totals },
         { new: true }
     ).populate("customer", "name").populate("items.product", "name");
-    if (!so) throw Object.assign(new Error("Sales order not found"), { status: 404 });
-    return so;
 };
 
 export const deleteSalesOrder = async (id, groupId) => {
-    const so = await SalesOrder.findOneAndDelete({ _id: id, group: groupId });
+    const so = await SalesOrder.findOne({ _id: id, group: groupId });
     if (!so) throw Object.assign(new Error("Sales order not found"), { status: 404 });
+
+    const deliveryCount = await Delivery.countDocuments({ salesOrder: id, group: groupId });
+    if (deliveryCount > 0)
+        throw Object.assign(new Error(`Cannot delete SO — ${deliveryCount} delivery/deliveries exist against it. Delete them first.`), { status: 409 });
+
+    const invoiceCount = await SalesInvoice.countDocuments({ salesOrder: id, group: groupId });
+    if (invoiceCount > 0)
+        throw Object.assign(new Error(`Cannot delete SO — ${invoiceCount} sales invoice(s) exist against it. Delete them first.`), { status: 409 });
+
+    await so.deleteOne();
 };
 
 export const getSalesOrderPDF = async (id, groupId) => {

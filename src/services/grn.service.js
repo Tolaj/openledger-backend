@@ -1,6 +1,7 @@
 import GRN from "../models/grn.model.js";
 import PurchaseOrder from "../models/purchaseOrder.model.js";
 import Inventory from "../models/inventory.model.js";
+import StockMovement from "../models/stockMovement.model.js";
 import Group from "../models/group.model.js";
 import Counter from "../models/counter.model.js";
 import { writeMovement } from "./stockMovement.service.js";
@@ -120,4 +121,25 @@ export const createGRN = async (body) => {
 export const deleteGRN = async (id, groupId) => {
     const grn = await GRN.findOneAndDelete({ _id: id, group: groupId });
     if (!grn) throw Object.assign(new Error("GRN not found"), { status: 404 });
+
+    // Reverse stock for each received item
+    for (const item of grn.items) {
+        if (!item.product || item.qtyReceived <= 0) continue;
+        const inv = await Inventory.findOne({ product: item.product });
+        if (inv) {
+            inv.quantityAvailable = Math.max(0, inv.quantityAvailable - item.qtyReceived);
+            inv.lastUpdated = new Date();
+            await inv.save();
+        }
+    }
+
+    // Delete associated stock movements
+    await StockMovement.deleteMany({ sourceType: "grn", sourceId: grn._id });
+
+    // Revert PO status: recompute based on remaining GRNs
+    if (grn.purchaseOrder) {
+        const remainingGRNs = await GRN.find({ purchaseOrder: grn.purchaseOrder, group: groupId });
+        const newStatus = remainingGRNs.length === 0 ? "sent" : "partial";
+        await PurchaseOrder.findByIdAndUpdate(grn.purchaseOrder, { status: newStatus });
+    }
 };

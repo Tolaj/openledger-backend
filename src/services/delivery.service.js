@@ -1,6 +1,7 @@
 import Delivery from "../models/delivery.model.js";
 import SalesOrder from "../models/salesOrder.model.js";
 import Inventory from "../models/inventory.model.js";
+import StockMovement from "../models/stockMovement.model.js";
 import Counter from "../models/counter.model.js";
 import { writeMovement } from "./stockMovement.service.js";
 
@@ -137,4 +138,25 @@ export const createDelivery = async (body) => {
 export const deleteDelivery = async (id, groupId) => {
     const delivery = await Delivery.findOneAndDelete({ _id: id, group: groupId });
     if (!delivery) throw Object.assign(new Error("Delivery not found"), { status: 404 });
+
+    // Reverse stock: add back quantities that were shipped out
+    for (const item of delivery.items) {
+        if (!item.product || item.qtyDelivered <= 0) continue;
+        const inv = await Inventory.findOne({ product: item.product });
+        if (inv) {
+            inv.quantityAvailable += item.qtyDelivered;
+            inv.lastUpdated = new Date();
+            await inv.save();
+        }
+    }
+
+    // Delete associated stock movements
+    await StockMovement.deleteMany({ sourceType: "delivery", sourceId: delivery._id });
+
+    // Revert SO status based on remaining deliveries
+    if (delivery.salesOrder) {
+        const remainingDeliveries = await Delivery.find({ salesOrder: delivery.salesOrder, group: groupId });
+        const newStatus = remainingDeliveries.length === 0 ? "confirmed" : "partial";
+        await SalesOrder.findByIdAndUpdate(delivery.salesOrder, { status: newStatus });
+    }
 };

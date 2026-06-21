@@ -1,4 +1,6 @@
 import PurchaseOrder from "../models/purchaseOrder.model.js";
+import GRN from "../models/grn.model.js";
+import PurchaseInvoice from "../models/purchaseInvoice.model.js";
 import Group from "../models/group.model.js";
 import Counter from "../models/counter.model.js";
 import { sendMail } from "../utils/mailer.js";
@@ -42,19 +44,33 @@ export const createPurchaseOrder = async (body) => {
 };
 
 export const updatePurchaseOrder = async (id, groupId, body) => {
+    const existing = await PurchaseOrder.findOne({ _id: id, group: groupId });
+    if (!existing) throw Object.assign(new Error("Purchase order not found"), { status: 404 });
+
+    if (existing.status === "received" && body.status)
+        throw Object.assign(new Error("Cannot change status of a fully received purchase order."), { status: 409 });
+
     const totals = body.items ? calcTotals(body.items) : {};
-    const po = await PurchaseOrder.findOneAndUpdate(
+    return PurchaseOrder.findOneAndUpdate(
         { _id: id, group: groupId },
         { ...body, ...totals },
         { new: true }
     ).populate("vendor", "name email phone").populate("items.product", "name");
-    if (!po) throw Object.assign(new Error("Purchase order not found"), { status: 404 });
-    return po;
 };
 
 export const deletePurchaseOrder = async (id, groupId) => {
-    const po = await PurchaseOrder.findOneAndDelete({ _id: id, group: groupId });
+    const po = await PurchaseOrder.findOne({ _id: id, group: groupId });
     if (!po) throw Object.assign(new Error("Purchase order not found"), { status: 404 });
+
+    const grnCount = await GRN.countDocuments({ purchaseOrder: id, group: groupId });
+    if (grnCount > 0)
+        throw Object.assign(new Error(`Cannot delete PO — ${grnCount} GRN(s) exist against it. Delete them first.`), { status: 409 });
+
+    const invoiceCount = await PurchaseInvoice.countDocuments({ purchaseOrder: id, group: groupId });
+    if (invoiceCount > 0)
+        throw Object.assign(new Error(`Cannot delete PO — ${invoiceCount} purchase invoice(s) exist against it. Delete them first.`), { status: 409 });
+
+    await po.deleteOne();
 };
 
 export const getPurchaseOrderPDF = async (id, groupId) => {

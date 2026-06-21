@@ -105,6 +105,13 @@ export const updateSalesInvoice = async (id, groupId, data) => {
         { new: true }
     );
 
+    // If moving AWAY from paid, delete the linked Finance entry
+    if (existing.status === "paid" && data.status && data.status !== "paid" && existing.financeEntryId) {
+        await Finance.findByIdAndDelete(existing.financeEntryId).catch(() => {});
+        inv.financeEntryId = undefined;
+        await inv.save();
+    }
+
     // Auto-create income Finance entry when invoice is marked paid
     if (data.status === "paid" && existing.status !== "paid" && !existing.financeEntryId) {
         // Populate product with category for line items

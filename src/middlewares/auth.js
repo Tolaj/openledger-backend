@@ -31,7 +31,10 @@ const setSessionLocals = (req, res, next) => {
 };
 
 const requireAuth = (req, res, next) => {
-    const token = req.cookies?.auth;
+    const headerToken = req.headers.authorization?.startsWith('Bearer ')
+        ? req.headers.authorization.slice(7)
+        : null;
+    const token = headerToken || req.cookies?.auth;
     if (!token) return res.status(401).json({ error: "Unauthorized" });
     try {
         req.user = jwt.verify(token, process.env.JWT_SECRET);

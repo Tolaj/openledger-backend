@@ -1,7 +1,10 @@
 import { Router } from "express";
+import { requireAuth } from "../middlewares/auth.js";
 import { financeController } from "../controllers/index.js";
 
 const router = Router();
+
+router.use(requireAuth);
 
 router.get("/summary", financeController.getSummary);
 router.get("/", financeController.getAll);

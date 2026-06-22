@@ -3,7 +3,8 @@ import { templateService } from "../services/index.js";
 export const getAll = async (req, res, next) => {
     try {
         const userId = req.user?.id ?? req.query.userId;
-        res.json(await templateService.getTemplates(userId));
+        const type = req.query.type;
+        res.json(await templateService.getTemplates(userId, type));
     } catch (err) { next(err); }
 };
 

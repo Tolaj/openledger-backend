@@ -2,6 +2,7 @@ import Template from "../models/template.model.js";
 import Group from "../models/group.model.js";
 import Category from "../models/category.model.js";
 import Product from "../models/product.model.js";
+import "../models/resourcePlan.model.js"; // register model so populate("resourcePlans") doesn't throw
 
 export const applyTemplate = async ({ templateId, groupId }) => {
     const [template, group] = await Promise.all([
@@ -65,7 +66,9 @@ export const applyTemplate = async ({ templateId, groupId }) => {
     const newCatIds = [];
     for (const catDef of template.categories) {
         if (!existingCatNames.has(catDef.name)) {
-            const created = await new Category(catDef).save();
+            // Strip _id so Mongoose always does an INSERT, not an UPDATE
+            const { _id, __v, ...catData } = catDef.toObject ? catDef.toObject() : catDef;
+            const created = await new Category(catData).save();
             newCatIds.push(created._id);
             catNameToId[catDef.name] = created._id;
         }

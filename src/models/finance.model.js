@@ -18,6 +18,16 @@ const splitAmongSchema = new mongoose.Schema(
     { _id: false }
 );
 
+const financeItemSchema = new mongoose.Schema(
+    {
+        name:     { type: String },
+        amount:   { type: Number, default: 0 },
+        qty:      { type: Number },
+        category: { type: mongoose.Schema.Types.ObjectId, ref: "Category" },
+    },
+    { _id: false }
+);
+
 const financeSchema = new mongoose.Schema(
     {
         type: {
@@ -25,15 +35,16 @@ const financeSchema = new mongoose.Schema(
             required: true,
             enum: ["income", "expense", "loan", "investment"],
         },
-        amount:      { type: Number, required: true },
-        description: { type: String },
-        date:        { type: Date, default: Date.now },
-        group:       { type: mongoose.Schema.Types.ObjectId, ref: "Group" },
-        user:        { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-        category:    { type: mongoose.Schema.Types.ObjectId, ref: "Category" },
-        paidBy:      { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-        splitAmong:  [splitAmongSchema],
+        amount:       { type: Number, required: true },
+        description:  { type: String },
+        date:         { type: Date, default: Date.now },
+        group:        { type: mongoose.Schema.Types.ObjectId, ref: "Group" },
+        user:         { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+        category:     { type: mongoose.Schema.Types.ObjectId, ref: "Category" },
+        paidBy:       { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+        splitAmong:   [splitAmongSchema],
         debtTracking: [debtTrackingSchema],
+        items:        [financeItemSchema],
     },
     { timestamps: true }
 );

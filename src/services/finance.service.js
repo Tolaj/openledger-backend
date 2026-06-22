@@ -3,10 +3,11 @@ import Finance from "../models/finance.model.js";
 const populate = [
     { path: "paidBy", select: "name email" },
     { path: "user",   select: "name email" },
-    { path: "category", select: "name" },
+    { path: "category", select: "name icon" },
     { path: "splitAmong.user", select: "name email" },
     { path: "debtTracking.from", select: "name email" },
     { path: "debtTracking.to",   select: "name email" },
+    { path: "items.category", select: "name icon" },
 ];
 
 export const getAllFinance = async ({ groupId, type, startDate, endDate }) => {
@@ -39,10 +40,16 @@ export const createFinance = async (body) => {
             }
         }
     }
+    if (!body.paidBy)   delete body.paidBy;
+    if (!body.category) delete body.category;
+    if (!body.user)     delete body.user;
     return new Finance({ ...body, debtTracking }).save();
 };
 
 export const updateFinance = async (id, body) => {
+    if (!body.paidBy)   delete body.paidBy;
+    if (!body.category) delete body.category;
+    if (!body.user)     delete body.user;
     const entry = await Finance.findByIdAndUpdate(id, body, { new: true }).populate(populate);
     if (!entry) throw Object.assign(new Error("Finance entry not found"), { status: 404 });
     return entry;

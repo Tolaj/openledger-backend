@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 
 const budgetCategorySchema = new mongoose.Schema(
     {
+        categoryRef:     { type: mongoose.Schema.Types.ObjectId, ref: "Category" },
         name:            { type: String, required: true },
         allocatedAmount: { type: Number, required: true },
         spentAmount:     { type: Number, default: 0 },

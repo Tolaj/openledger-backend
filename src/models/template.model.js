@@ -6,6 +6,7 @@ const templateSchema = new mongoose.Schema(
         emoji: { type: String, default: "📦" },
         description: { type: String },
         isSystem: { type: Boolean, default: false },
+        type: { type: String, enum: ["personal", "business", "all"], default: "all" },
         createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
         categories: [
             {

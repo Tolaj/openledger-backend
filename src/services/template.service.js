@@ -1,14 +1,19 @@
 import Template from "../models/template.model.js";
 import { systemTemplates } from "../constants/systemTemplates.js";
 
-export const getTemplates = async (userId) => {
+export const getTemplates = async (userId, type) => {
+    // Re-seed if system templates count doesn't match (handles new templates added)
     const count = await Template.countDocuments({ isSystem: true });
-    if (count === 0 && systemTemplates.length > 0) {
+    if (count !== systemTemplates.length) {
+        await Template.deleteMany({ isSystem: true });
         await Template.insertMany(systemTemplates.map((t) => ({ ...t, isSystem: true })));
     }
     const query = userId
         ? { $or: [{ isSystem: true }, { createdBy: userId }] }
         : { isSystem: true };
+    if (type && type !== "all") {
+        query.$and = [{ $or: [{ type }, { type: "all" }] }];
+    }
     return Template.find(query);
 };
 

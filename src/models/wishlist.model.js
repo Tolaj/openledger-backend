@@ -6,6 +6,7 @@ const wishlistItemSchema = new mongoose.Schema(
         unit: { type: String, required: true },
         price: { type: String, required: true },
         count: { type: String, required: true },
+        taxRate: { type: Number, default: 0 },
         splitType: { type: String, enum: ["equal", "percentage", "custom"] },
         splitAmong: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     },

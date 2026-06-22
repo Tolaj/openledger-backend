@@ -1,7 +1,10 @@
 import { Router } from "express";
+import { requireAuth } from "../middlewares/auth.js";
 import { categoryController } from "../controllers/index.js";
 
 const router = Router();
+
+router.use(requireAuth);
 
 router.get("/", categoryController.getAll);
 router.get("/:id", categoryController.getOne);

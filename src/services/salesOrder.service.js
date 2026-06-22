@@ -1,11 +1,13 @@
 import SalesOrder from "../models/salesOrder.model.js";
 import Delivery from "../models/delivery.model.js";
 import SalesInvoice from "../models/salesInvoice.model.js";
+import Inventory from "../models/inventory.model.js";
 import Group from "../models/group.model.js";
 import Counter from "../models/counter.model.js";
 import { sendMail } from "../utils/mailer.js";
 import { generatePDF } from "../utils/pdfGenerator.js";
 import { renderSOHtml } from "../utils/soTemplate.js";
+import { writeMovement } from "./stockMovement.service.js";
 
 const calcTotals = (items) => {
     const subtotal = items.reduce((s, i) => s + (i.amount || 0), 0);
@@ -51,11 +53,98 @@ export const updateSalesOrder = async (id, groupId, body) => {
         throw Object.assign(new Error("Cannot change status of a fully delivered sales order."), { status: 409 });
 
     const totals = body.items ? calcTotals(body.items) : {};
-    return SalesOrder.findOneAndUpdate(
+    const updated = await SalesOrder.findOneAndUpdate(
         { _id: id, group: groupId },
         { ...body, ...totals },
         { new: true }
     ).populate("customer", "name").populate("items.product", "name");
+
+    // Auto-create Delivery + draft invoice when SO is manually marked delivered
+    if (body.status === "delivered" && existing.status !== "delivered") {
+        const existingDelivery = await Delivery.findOne({ salesOrder: id, group: groupId });
+        if (!existingDelivery) {
+            // Create Delivery
+            const delCounter = await Counter.findOneAndUpdate(
+                { key: `delivery_${groupId}` },
+                { $inc: { seq: 1 } },
+                { new: true, upsert: true }
+            );
+            const deliveryNumber = `DEL-${String(delCounter.seq).padStart(4, "0")}`;
+            const delItems = existing.items.map((it) => ({
+                ...(it.product ? { product: it.product } : {}),
+                description: it.description,
+                qtyOrdered: it.qty,
+                qtyDelivered: it.qty,
+                unit: it.unit,
+                unitPrice: it.unitPrice,
+            }));
+            const delivery = await new Delivery({
+                deliveryNumber,
+                salesOrder: id,
+                group: groupId,
+                status: "complete",
+                items: delItems,
+                deliveredDate: existing.deliveryDate || new Date(),
+                createdBy: body.createdBy,
+            }).save();
+
+            // Stock OUT
+            for (const item of existing.items) {
+                if (!item.product || item.qty <= 0) continue;
+                const inv = await Inventory.findOne({ product: item.product });
+                if (inv) {
+                    inv.quantityAvailable = Math.max(0, inv.quantityAvailable - item.qty);
+                    inv.lastUpdated = new Date();
+                    await inv.save();
+                }
+                await writeMovement({
+                    group: groupId,
+                    product: item.product,
+                    change: -item.qty,
+                    sourceType: "delivery",
+                    sourceRef: deliveryNumber,
+                    sourceId: delivery._id,
+                    createdBy: body.createdBy,
+                });
+            }
+
+            // Create draft sales invoice linked to SO and Delivery
+            const invCounter = await Counter.findOneAndUpdate(
+                { key: `sinv_${groupId}` },
+                { $inc: { seq: 1 } },
+                { new: true, upsert: true }
+            );
+            const invoiceNumber = `SINV-${String(invCounter.seq).padStart(4, "0")}`;
+            const invItems = delItems.map((it) => ({
+                ...(it.product ? { product: it.product } : {}),
+                description: it.description,
+                qty: it.qtyDelivered,
+                unit: it.unit,
+                unitPrice: it.unitPrice,
+                taxRate: 0,
+                amount: it.qtyDelivered * it.unitPrice,
+            }));
+            const subtotal   = invItems.reduce((s, i) => s + (i.amount || 0), 0);
+            const grandTotal = subtotal;
+            await new SalesInvoice({
+                invoiceNumber,
+                salesOrder: id,
+                delivery: delivery._id,
+                customer: existing.customer,
+                group: groupId,
+                items: invItems,
+                subtotal,
+                taxAmount: 0,
+                grandTotal,
+                invoiceDate: new Date(),
+                dueDate: existing.deliveryDate || undefined,
+                status: "draft",
+                createdBy: body.createdBy,
+            }).save();
+        }
+    }
+
+    return updated;
 };
 
 export const deleteSalesOrder = async (id, groupId) => {

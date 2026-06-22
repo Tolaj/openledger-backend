@@ -1,11 +1,13 @@
 import PurchaseOrder from "../models/purchaseOrder.model.js";
 import GRN from "../models/grn.model.js";
 import PurchaseInvoice from "../models/purchaseInvoice.model.js";
+import Inventory from "../models/inventory.model.js";
 import Group from "../models/group.model.js";
 import Counter from "../models/counter.model.js";
 import { sendMail } from "../utils/mailer.js";
 import { generatePDF } from "../utils/pdfGenerator.js";
 import { renderPOHtml } from "../utils/poTemplate.js";
+import { writeMovement } from "./stockMovement.service.js";
 
 const calcTotals = (items) => {
     const subtotal = items.reduce((s, i) => s + (i.amount || 0), 0);
@@ -51,11 +53,109 @@ export const updatePurchaseOrder = async (id, groupId, body) => {
         throw Object.assign(new Error("Cannot change status of a fully received purchase order."), { status: 409 });
 
     const totals = body.items ? calcTotals(body.items) : {};
-    return PurchaseOrder.findOneAndUpdate(
+    const updated = await PurchaseOrder.findOneAndUpdate(
         { _id: id, group: groupId },
         { ...body, ...totals },
         { new: true }
     ).populate("vendor", "name email phone").populate("items.product", "name");
+
+    // Auto-create GRN + draft invoice when PO is manually marked received
+    if (body.status === "received" && existing.status !== "received") {
+        // Check no GRN already exists for this PO
+        const existingGRN = await GRN.findOne({ purchaseOrder: id, group: groupId });
+        if (!existingGRN) {
+            // Create GRN
+            const grnCounter = await Counter.findOneAndUpdate(
+                { key: `grn_${groupId}` },
+                { $inc: { seq: 1 } },
+                { new: true, upsert: true }
+            );
+            const grnNumber = `GRN-${String(grnCounter.seq).padStart(4, "0")}`;
+            const grnItems = existing.items.map((it) => ({
+                ...(it.product ? { product: it.product } : {}),
+                description: it.description,
+                qtyOrdered: it.qty,
+                qtyReceived: it.qty,
+                unit: it.unit,
+                unitPrice: it.unitPrice,
+            }));
+            const grn = await new GRN({
+                grnNumber,
+                purchaseOrder: id,
+                group: groupId,
+                status: "complete",
+                items: grnItems,
+                receivedDate: existing.expectedDate || new Date(),
+                createdBy: body.createdBy,
+            }).save();
+
+            // Update inventory stock IN
+            for (const item of existing.items) {
+                if (!item.product || item.qty <= 0) continue;
+                const inv = await Inventory.findOne({ product: item.product });
+                if (inv) {
+                    inv.quantityAvailable += item.qty;
+                    inv.lastUpdated = new Date();
+                    await inv.save();
+                } else {
+                    const created = await new Inventory({
+                        product: item.product,
+                        quantityAvailable: item.qty,
+                        price: item.unitPrice || 0,
+                        splitAmong: [],
+                        lastUpdated: new Date(),
+                    }).save();
+                    await Group.updateOne({ _id: groupId }, { $addToSet: { inventories: created._id } });
+                }
+                await writeMovement({
+                    group: groupId,
+                    product: item.product,
+                    change: item.qty,
+                    sourceType: "grn",
+                    sourceRef: grnNumber,
+                    sourceId: grn._id,
+                    createdBy: body.createdBy,
+                });
+            }
+
+            // Create draft invoice linked to GRN
+            const invCounter = await Counter.findOneAndUpdate(
+                { key: `pinv_${groupId}` },
+                { $inc: { seq: 1 } },
+                { new: true, upsert: true }
+            );
+            const invoiceNumber = `PINV-${String(invCounter.seq).padStart(4, "0")}`;
+            const invItems = grnItems.map((it) => ({
+                ...(it.product ? { product: it.product } : {}),
+                description: it.description,
+                qty: it.qtyReceived,
+                unit: it.unit,
+                unitPrice: it.unitPrice,
+                taxRate: 0,
+                amount: it.qtyReceived * it.unitPrice,
+            }));
+            const subtotal   = invItems.reduce((s, i) => s + (i.amount || 0), 0);
+            const taxAmount  = 0;
+            const grandTotal = subtotal;
+            await new PurchaseInvoice({
+                invoiceNumber,
+                purchaseOrder: id,
+                grn: grn._id,
+                vendor: existing.vendor,
+                group: groupId,
+                items: invItems,
+                subtotal,
+                taxAmount,
+                grandTotal,
+                invoiceDate: new Date(),
+                dueDate: existing.expectedDate || undefined,
+                status: "draft",
+                createdBy: body.createdBy,
+            }).save();
+        }
+    }
+
+    return updated;
 };
 
 export const deletePurchaseOrder = async (id, groupId) => {

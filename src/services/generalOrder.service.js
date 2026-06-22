@@ -98,7 +98,7 @@ export const updateGeneralOrder = async (id, groupId, data) => {
 
     const order = await GeneralOrder.findOneAndUpdate({ _id: id, group: groupId }, data, { new: true });
 
-    // Trigger stock when hitting a terminal status for the first time
+    // Trigger stock + auto draft invoice when hitting a terminal status for the first time
     const newStatus  = data.status;
     const wasTerminal = terminalStatuses.includes(existing.status);
     if (!wasTerminal && newStatus && terminalStatuses.includes(newStatus)) {
@@ -108,19 +108,54 @@ export const updateGeneralOrder = async (id, groupId, data) => {
         const createdBy = existing.createdBy;
 
         if (existing.direction === "payable") {
-            // Payable: received/delivered → stock IN
             await applyStockIn(items, group);
             for (const item of items) {
                 if (!item.product || item.qty <= 0) continue;
                 await writeMovement({ group, product: item.product, change: item.qty, sourceType: "go", sourceRef: goNumber, sourceId: existing._id, createdBy });
             }
         } else {
-            // Receivable: delivered → stock OUT
             await applyStockOut(items);
             for (const item of items) {
                 if (!item.product || item.qty <= 0) continue;
                 await writeMovement({ group, product: item.product, change: -item.qty, sourceType: "go", sourceRef: goNumber, sourceId: existing._id, createdBy });
             }
+        }
+
+        // Auto-create draft invoice if none exists yet
+        const existingInvoice = await GeneralInvoice.findOne({ generalOrder: id, group });
+        if (!existingInvoice) {
+            const invCounter = await Counter.findOneAndUpdate(
+                { key: `ginv_${group}` },
+                { $inc: { seq: 1 } },
+                { new: true, upsert: true }
+            );
+            const invoiceNumber = `GINV-${String(invCounter.seq).padStart(4, "0")}`;
+            const invItems = items.map((it) => ({
+                ...(it.product ? { product: it.product } : {}),
+                description: it.description,
+                qty: it.qty,
+                unit: it.unit,
+                unitPrice: it.unitPrice,
+                taxRate: it.taxRate || 0,
+                amount: it.amount || it.qty * it.unitPrice,
+            }));
+            const subtotal  = invItems.reduce((s, i) => s + (i.amount || 0), 0);
+            const taxAmount = invItems.reduce((s, i) => s + ((i.amount || 0) * (i.taxRate || 0)) / 100, 0);
+            await new GeneralInvoice({
+                invoiceNumber,
+                generalOrder: id,
+                recipient: existing.recipient,
+                direction: existing.direction === "payable" ? "expense" : "income",
+                group,
+                items: invItems,
+                subtotal,
+                taxAmount,
+                grandTotal: subtotal + taxAmount,
+                invoiceDate: new Date(),
+                dueDate: existing.orderDate || undefined,
+                status: "draft",
+                createdBy,
+            }).save();
         }
     }
 

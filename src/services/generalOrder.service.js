@@ -200,6 +200,6 @@ export const sendGeneralOrder = async (id, groupId, { recipientEmail } = {}) => 
         attachments: [{ filename: `${go.goNumber}.pdf`, content: pdf }],
     });
 
-    await GeneralOrder.findByIdAndUpdate(id, { status: "sent" });
+    await GeneralOrder.findOneAndUpdate({ _id: id, status: { $nin: ["received", "delivered"] } }, { status: "sent" });
     return { success: true };
 };

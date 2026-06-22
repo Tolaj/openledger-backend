@@ -111,7 +111,7 @@ export const sendSalesOrder = async (id, groupId, { recipientEmail } = {}) => {
         attachments: [{ filename: `${so.soNumber}.pdf`, content: pdfBuffer, contentType: "application/pdf" }],
     });
 
-    const updated = await SalesOrder.findByIdAndUpdate(id, { status: "sent" }, { new: true })
+    const updated = await SalesOrder.findOneAndUpdate({ _id: id, status: { $ne: "delivered" } }, { status: "sent" }, { new: true })
         .populate("customer", "name email phone")
         .populate("items.product", "name");
     return updated;

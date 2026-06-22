@@ -202,6 +202,6 @@ export const sendSalesInvoice = async (id, groupId, { recipientEmail } = {}) => 
         attachments: [{ filename: `${inv.invoiceNumber}.pdf`, content: pdf }],
     });
 
-    await SalesInvoice.findByIdAndUpdate(id, { status: "sent" });
+    await SalesInvoice.findOneAndUpdate({ _id: id, status: { $ne: "paid" } }, { status: "sent" });
     return { success: true };
 };

@@ -120,9 +120,9 @@ export const sendPurchaseOrder = async (id, groupId, { recipientEmail } = {}) =>
         ],
     });
 
-    // Mark PO as sent
-    const updated = await PurchaseOrder.findByIdAndUpdate(
-        id,
+    // Mark PO as sent (only if not already at terminal status)
+    const updated = await PurchaseOrder.findOneAndUpdate(
+        { _id: id, status: { $ne: "received" } },
         { status: "sent" },
         { new: true }
     ).populate("vendor", "name").populate("items.product", "name");

@@ -38,7 +38,10 @@ export const logout = (req, res) => {
 
 export const session = (req, res, next) => {
     try {
-        const user = authService.decodeSession(req.cookies?.auth);
+        const headerToken = req.headers.authorization?.startsWith('Bearer ')
+            ? req.headers.authorization.slice(7)
+            : null;
+        const user = authService.decodeSession(headerToken || req.cookies?.auth);
         res.json({ user });
     } catch (err) {
         next(err);

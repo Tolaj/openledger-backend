@@ -15,7 +15,7 @@ export const register = async (req, res, next) => {
     try {
         const { token, user } = await authService.register(req.body);
         setAuthCookie(res, token);
-        res.status(201).json({ user: user.toJSON() });
+        res.status(201).json({ token, user: user.toJSON() });
     } catch (err) {
         next(err);
     }
@@ -25,7 +25,7 @@ export const login = async (req, res, next) => {
     try {
         const { token, user } = await authService.login(req.body);
         setAuthCookie(res, token);
-        res.json({ user: user.toJSON() });
+        res.json({ token, user: user.toJSON() });
     } catch (err) {
         next(err);
     }

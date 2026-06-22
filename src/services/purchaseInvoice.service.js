@@ -64,15 +64,24 @@ export const createPurchaseInvoice = async (body) => {
             const po = grn.purchaseOrder;
             vendorId = vendorId || po?.vendor;
             if (po && !body.purchaseOrder) body.purchaseOrder = po._id;
-            resolvedItems = grn.items.map((it) => ({
-                ...(it.product ? { product: it.product } : {}),
-                description: it.description,
-                qty: it.qtyReceived,
-                unit: it.unit,
-                unitPrice: it.unitPrice,
-                taxRate: 0,
-                amount: it.qtyReceived * it.unitPrice,
-            }));
+            const poItemsById = {};
+            if (po?.items) {
+                po.items.forEach((pi) => {
+                    if (pi.product) poItemsById[String(pi.product)] = pi;
+                });
+            }
+            resolvedItems = grn.items.map((it) => {
+                const poItem = it.product ? poItemsById[String(it.product)] : null;
+                return {
+                    ...(it.product ? { product: it.product } : {}),
+                    description: it.description,
+                    qty: it.qtyReceived,
+                    unit: it.unit,
+                    unitPrice: it.unitPrice,
+                    taxRate: poItem?.taxRate ?? 0,
+                    amount: it.qtyReceived * it.unitPrice,
+                };
+            });
         }
     } else if (poId && (!items || items.length === 0)) {
         const po = await PurchaseOrder.findOne({ _id: poId, group });

@@ -63,15 +63,24 @@ export const createSalesInvoice = async (body) => {
             const so = delivery.salesOrder;
             customerId = customerId || so?.customer;
             if (so && !body.salesOrder) body.salesOrder = so._id;
-            resolvedItems = delivery.items.map((it) => ({
-                ...(it.product ? { product: it.product } : {}),
-                description: it.description,
-                qty: it.qtyDelivered,
-                unit: it.unit,
-                unitPrice: it.unitPrice,
-                taxRate: 0,
-                amount: it.qtyDelivered * it.unitPrice,
-            }));
+            const soItemsById = {};
+            if (so?.items) {
+                so.items.forEach((si) => {
+                    if (si.product) soItemsById[String(si.product)] = si;
+                });
+            }
+            resolvedItems = delivery.items.map((it) => {
+                const soItem = it.product ? soItemsById[String(it.product)] : null;
+                return {
+                    ...(it.product ? { product: it.product } : {}),
+                    description: it.description,
+                    qty: it.qtyDelivered,
+                    unit: it.unit,
+                    unitPrice: it.unitPrice,
+                    taxRate: soItem?.taxRate ?? 0,
+                    amount: it.qtyDelivered * it.unitPrice,
+                };
+            });
         }
     } else if (soId && (!items || items.length === 0)) {
         const so = await SalesOrder.findOne({ _id: soId, group });

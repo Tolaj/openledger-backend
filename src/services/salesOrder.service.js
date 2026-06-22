@@ -118,17 +118,18 @@ export const updateSalesOrder = async (id, groupId, body) => {
                 { new: true, upsert: true }
             );
             const invoiceNumber = `SINV-${String(invCounter.seq).padStart(4, "0")}`;
-            const invItems = delItems.map((it) => ({
+            const invItems = existing.items.map((it) => ({
                 ...(it.product ? { product: it.product } : {}),
                 description: it.description,
-                qty: it.qtyDelivered,
+                qty: it.qty,
                 unit: it.unit,
                 unitPrice: it.unitPrice,
-                taxRate: 0,
-                amount: it.qtyDelivered * it.unitPrice,
+                taxRate: it.taxRate ?? 0,
+                amount: it.qty * it.unitPrice,
             }));
             const subtotal   = invItems.reduce((s, i) => s + (i.amount || 0), 0);
-            const grandTotal = subtotal;
+            const taxAmount  = invItems.reduce((s, i) => s + (i.amount || 0) * (i.taxRate || 0) / 100, 0);
+            const grandTotal = subtotal + taxAmount;
             await new SalesInvoice({
                 invoiceNumber,
                 salesOrder: id,
@@ -137,7 +138,7 @@ export const updateSalesOrder = async (id, groupId, body) => {
                 group: groupId,
                 items: invItems,
                 subtotal,
-                taxAmount: 0,
+                taxAmount,
                 grandTotal,
                 invoiceDate: new Date(),
                 dueDate: existing.deliveryDate || undefined,

@@ -8,6 +8,7 @@ router.use(requireAuth);
 router.get("/", grnController.getAll);
 router.get("/:id", grnController.getOne);
 router.post("/", grnController.create);
+router.put("/:id",    grnController.update);
 router.delete("/:id", grnController.remove);
 
 export default router;

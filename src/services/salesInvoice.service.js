@@ -3,6 +3,10 @@ import Delivery from "../models/delivery.model.js";
 import SalesOrder from "../models/salesOrder.model.js";
 import Counter from "../models/counter.model.js";
 import Finance from "../models/finance.model.js";
+import Group from "../models/group.model.js";
+import { sendMail } from "../utils/mailer.js";
+import { generatePDF } from "../utils/pdfGenerator.js";
+import { renderSalesInvoiceHtml } from "../utils/salesInvoiceTemplate.js";
 
 const nextInvoiceNumber = async (groupId) => {
     const counter = await Counter.findOneAndUpdate(
@@ -15,15 +19,22 @@ const nextInvoiceNumber = async (groupId) => {
 
 const populateInvoice = (query) =>
     query
-        .populate({ path: "customer", select: "name" })
+        .populate({ path: "customer", select: "name email phone" })
         .populate({ path: "salesOrder", select: "soNumber" })
         .populate({ path: "delivery", select: "deliveryNumber" })
         .populate({ path: "items.product", select: "name unit", populate: { path: "category", select: "name icon" } });
 
-export const getAllSalesInvoices = (groupId) =>
-    populateInvoice(
-        SalesInvoice.find({ group: groupId }).sort({ createdAt: -1 })
+const markOverdue = async (groupId) => {
+    await SalesInvoice.updateMany(
+        { group: groupId, status: "sent", dueDate: { $lt: new Date() } },
+        { $set: { status: "overdue" } }
     );
+};
+
+export const getAllSalesInvoices = async (groupId) => {
+    await markOverdue(groupId);
+    return populateInvoice(SalesInvoice.find({ group: groupId }).sort({ createdAt: -1 }));
+};
 
 export const getSalesInvoiceById = async (id, groupId) => {
     const inv = await populateInvoice(
@@ -36,6 +47,13 @@ export const getSalesInvoiceById = async (id, groupId) => {
 export const createSalesInvoice = async (body) => {
     const { group, salesOrder: soId, delivery: deliveryId, createdBy, items = [], dueDate, notes, invoiceDate } = body;
 
+    // Block: Delivery already has an invoice
+    if (deliveryId) {
+        const existing = await SalesInvoice.findOne({ delivery: deliveryId, group });
+        if (existing)
+            throw Object.assign(new Error(`This delivery already has an invoice (${existing.invoiceNumber}). Each delivery can only be invoiced once.`), { status: 409 });
+    }
+
     let resolvedItems = items;
     let customerId = body.customer;
 
@@ -44,6 +62,7 @@ export const createSalesInvoice = async (body) => {
         if (delivery) {
             const so = delivery.salesOrder;
             customerId = customerId || so?.customer;
+            if (so && !body.salesOrder) body.salesOrder = so._id;
             resolvedItems = delivery.items.map((it) => ({
                 ...(it.product ? { product: it.product } : {}),
                 description: it.description,
@@ -78,7 +97,7 @@ export const createSalesInvoice = async (body) => {
 
     const inv = await new SalesInvoice({
         invoiceNumber,
-        salesOrder:  soId || undefined,
+        salesOrder:  soId || body.salesOrder || undefined,
         delivery:    deliveryId || undefined,
         customer:    customerId,
         group,
@@ -98,6 +117,9 @@ export const createSalesInvoice = async (body) => {
 export const updateSalesInvoice = async (id, groupId, data) => {
     const existing = await SalesInvoice.findOne({ _id: id, group: groupId }).populate("customer", "name");
     if (!existing) throw Object.assign(new Error("Sales invoice not found"), { status: 404 });
+
+    if (existing.status === "paid" && data.status && data.status !== "paid")
+        throw Object.assign(new Error("Cannot change status of a paid invoice."), { status: 409 });
 
     const inv = await SalesInvoice.findOneAndUpdate(
         { _id: id, group: groupId },
@@ -147,4 +169,39 @@ export const deleteSalesInvoice = async (id, groupId) => {
     if (inv.financeEntryId) {
         await Finance.findByIdAndDelete(inv.financeEntryId).catch(() => {});
     }
+};
+
+export const getSalesInvoicePDF = async (id, groupId) => {
+    const inv = await SalesInvoice.findOne({ _id: id, group: groupId })
+        .populate("customer")
+        .populate("salesOrder", "soNumber")
+        .populate("delivery", "deliveryNumber")
+        .populate("items.product", "name unit");
+    if (!inv) throw Object.assign(new Error("Sales invoice not found"), { status: 404 });
+    const group = await Group.findById(groupId).lean();
+    return generatePDF(renderSalesInvoiceHtml(inv.toObject(), group));
+};
+
+export const sendSalesInvoice = async (id, groupId, { recipientEmail } = {}) => {
+    const inv = await SalesInvoice.findOne({ _id: id, group: groupId })
+        .populate("customer")
+        .populate("salesOrder", "soNumber")
+        .populate("items.product", "name unit");
+    if (!inv) throw Object.assign(new Error("Sales invoice not found"), { status: 404 });
+
+    const toEmail = recipientEmail || inv.customer?.email;
+    if (!toEmail) throw Object.assign(new Error("No customer email address available."), { status: 400 });
+
+    const group = await Group.findById(groupId).lean();
+    const pdf   = await generatePDF(renderSalesInvoiceHtml(inv.toObject(), group));
+
+    await sendMail({
+        to: toEmail,
+        subject: `Invoice ${inv.invoiceNumber} from ${group?.name || "OpenLedger"}`,
+        html: `<p>Hi ${inv.customer?.name || "there"},</p><p>Please find your invoice <strong>${inv.invoiceNumber}</strong> attached.</p><p>Amount due: ${new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" }).format(inv.grandTotal || 0)}${inv.dueDate ? " · Due " + new Date(inv.dueDate).toLocaleDateString("en-IN") : ""}.</p><p>Thank you.</p>`,
+        attachments: [{ filename: `${inv.invoiceNumber}.pdf`, content: pdf }],
+    });
+
+    await SalesInvoice.findByIdAndUpdate(id, { status: "sent" });
+    return { success: true };
 };

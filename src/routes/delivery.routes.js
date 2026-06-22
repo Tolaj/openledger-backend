@@ -8,6 +8,7 @@ router.use(requireAuth);
 router.get("/", deliveryController.getAll);
 router.get("/:id", deliveryController.getOne);
 router.post("/", deliveryController.create);
+router.put("/:id",    deliveryController.update);
 router.delete("/:id", deliveryController.remove);
 
 export default router;

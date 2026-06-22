@@ -20,6 +20,11 @@ export const deliveryController = {
             }));
         } catch (err) { next(err); }
     },
+    update: async (req, res, next) => {
+        try {
+            res.json(await deliveryService.updateDelivery(req.params.id, req.query.groupId, req.body));
+        } catch (err) { next(err); }
+    },
     remove: async (req, res, next) => {
         try {
             await deliveryService.deleteDelivery(req.params.id, req.query.groupId);

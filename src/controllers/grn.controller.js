@@ -20,6 +20,11 @@ export const grnController = {
             }));
         } catch (err) { next(err); }
     },
+    update: async (req, res, next) => {
+        try {
+            res.json(await grnService.updateGRN(req.params.id, req.query.groupId, req.body));
+        } catch (err) { next(err); }
+    },
     remove: async (req, res, next) => {
         try {
             await grnService.deleteGRN(req.params.id, req.query.groupId);

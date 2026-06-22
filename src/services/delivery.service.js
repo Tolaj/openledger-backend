@@ -115,6 +115,14 @@ export const createDelivery = async (body) => {
         status: allFull ? "delivered" : "partial",
     });
 
+    // If this delivery is complete, mark all other partial deliveries for this SO as complete too
+    if (allFull) {
+        await Delivery.updateMany(
+            { salesOrder: soId, group, _id: { $ne: delivery._id }, status: "partial" },
+            { $set: { status: "complete" } }
+        );
+    }
+
     // Stock OUT + movement records
     await updateStockOut(items);
     for (const item of items) {
@@ -131,6 +139,27 @@ export const createDelivery = async (body) => {
     }
 
     return Delivery.findById(delivery._id)
+        .populate({ path: "salesOrder", select: "soNumber customer", populate: { path: "customer", select: "name" } })
+        .populate("items.product", "name unit");
+};
+
+export const updateDelivery = async (id, groupId, data) => {
+    const delivery = await Delivery.findOne({ _id: id, group: groupId });
+    if (!delivery) throw Object.assign(new Error("Delivery not found"), { status: 404 });
+
+    await Delivery.findByIdAndUpdate(id, data);
+
+    // When a delivery is marked complete, mark all sibling deliveries complete too
+    // and update the SO status to delivered
+    if (data.status === "complete" && delivery.salesOrder) {
+        await Delivery.updateMany(
+            { salesOrder: delivery.salesOrder, group: groupId, _id: { $ne: id } },
+            { $set: { status: "complete" } }
+        );
+        await SalesOrder.findByIdAndUpdate(delivery.salesOrder, { status: "delivered" });
+    }
+
+    return Delivery.findById(id)
         .populate({ path: "salesOrder", select: "soNumber customer", populate: { path: "customer", select: "name" } })
         .populate("items.product", "name unit");
 };

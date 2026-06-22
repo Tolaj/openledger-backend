@@ -3,6 +3,10 @@ import GRN from "../models/grn.model.js";
 import PurchaseOrder from "../models/purchaseOrder.model.js";
 import Counter from "../models/counter.model.js";
 import Finance from "../models/finance.model.js";
+import Group from "../models/group.model.js";
+import { sendMail } from "../utils/mailer.js";
+import { generatePDF } from "../utils/pdfGenerator.js";
+import { renderPurchaseInvoiceHtml } from "../utils/purchaseInvoiceTemplate.js";
 
 const nextInvoiceNumber = async (groupId) => {
     const counter = await Counter.findOneAndUpdate(
@@ -15,15 +19,22 @@ const nextInvoiceNumber = async (groupId) => {
 
 const populateInvoice = (query) =>
     query
-        .populate({ path: "vendor", select: "name" })
+        .populate({ path: "vendor", select: "name email phone" })
         .populate({ path: "purchaseOrder", select: "poNumber" })
         .populate({ path: "grn", select: "grnNumber" })
         .populate({ path: "items.product", select: "name unit", populate: { path: "category", select: "name icon" } });
 
-export const getAllPurchaseInvoices = (groupId) =>
-    populateInvoice(
-        PurchaseInvoice.find({ group: groupId }).sort({ createdAt: -1 })
+const markOverdue = async (groupId) => {
+    await PurchaseInvoice.updateMany(
+        { group: groupId, status: "sent", dueDate: { $lt: new Date() } },
+        { $set: { status: "overdue" } }
     );
+};
+
+export const getAllPurchaseInvoices = async (groupId) => {
+    await markOverdue(groupId);
+    return populateInvoice(PurchaseInvoice.find({ group: groupId }).sort({ createdAt: -1 }));
+};
 
 export const getPurchaseInvoiceById = async (id, groupId) => {
     const inv = await populateInvoice(
@@ -36,6 +47,13 @@ export const getPurchaseInvoiceById = async (id, groupId) => {
 export const createPurchaseInvoice = async (body) => {
     const { group, purchaseOrder: poId, grn: grnId, createdBy, items = [], dueDate, notes, invoiceDate } = body;
 
+    // Block: GRN already has an invoice
+    if (grnId) {
+        const existing = await PurchaseInvoice.findOne({ grn: grnId, group });
+        if (existing)
+            throw Object.assign(new Error(`This GRN already has an invoice (${existing.invoiceNumber}). Each GRN can only be invoiced once.`), { status: 409 });
+    }
+
     // Auto-populate items from GRN if provided and no items passed
     let resolvedItems = items;
     let vendorId = body.vendor;
@@ -45,6 +63,7 @@ export const createPurchaseInvoice = async (body) => {
         if (grn) {
             const po = grn.purchaseOrder;
             vendorId = vendorId || po?.vendor;
+            if (po && !body.purchaseOrder) body.purchaseOrder = po._id;
             resolvedItems = grn.items.map((it) => ({
                 ...(it.product ? { product: it.product } : {}),
                 description: it.description,
@@ -79,7 +98,7 @@ export const createPurchaseInvoice = async (body) => {
 
     const inv = await new PurchaseInvoice({
         invoiceNumber,
-        purchaseOrder: poId || undefined,
+        purchaseOrder: poId || body.purchaseOrder || undefined,
         grn: grnId || undefined,
         vendor: vendorId,
         group,
@@ -99,6 +118,9 @@ export const createPurchaseInvoice = async (body) => {
 export const updatePurchaseInvoice = async (id, groupId, data) => {
     const existing = await PurchaseInvoice.findOne({ _id: id, group: groupId }).populate("vendor", "name");
     if (!existing) throw Object.assign(new Error("Purchase invoice not found"), { status: 404 });
+
+    if (existing.status === "paid" && data.status && data.status !== "paid")
+        throw Object.assign(new Error("Cannot change status of a paid invoice."), { status: 409 });
 
     const inv = await PurchaseInvoice.findOneAndUpdate(
         { _id: id, group: groupId },
@@ -154,4 +176,39 @@ export const deletePurchaseInvoice = async (id, groupId) => {
     if (inv.financeEntryId) {
         await Finance.findByIdAndDelete(inv.financeEntryId).catch(() => {});
     }
+};
+
+export const getPurchaseInvoicePDF = async (id, groupId) => {
+    const inv = await PurchaseInvoice.findOne({ _id: id, group: groupId })
+        .populate("vendor")
+        .populate("purchaseOrder", "poNumber")
+        .populate("grn", "grnNumber")
+        .populate("items.product", "name unit");
+    if (!inv) throw Object.assign(new Error("Purchase invoice not found"), { status: 404 });
+    const group = await Group.findById(groupId).lean();
+    return generatePDF(renderPurchaseInvoiceHtml(inv.toObject(), group));
+};
+
+export const sendPurchaseInvoice = async (id, groupId, { recipientEmail } = {}) => {
+    const inv = await PurchaseInvoice.findOne({ _id: id, group: groupId })
+        .populate("vendor")
+        .populate("purchaseOrder", "poNumber")
+        .populate("items.product", "name unit");
+    if (!inv) throw Object.assign(new Error("Purchase invoice not found"), { status: 404 });
+
+    const toEmail = recipientEmail || inv.vendor?.email;
+    if (!toEmail) throw Object.assign(new Error("No vendor email address available."), { status: 400 });
+
+    const group = await Group.findById(groupId).lean();
+    const pdf   = await generatePDF(renderPurchaseInvoiceHtml(inv.toObject(), group));
+
+    await sendMail({
+        to: toEmail,
+        subject: `Purchase Invoice ${inv.invoiceNumber} from ${group?.name || "OpenLedger"}`,
+        html: `<p>Hi ${inv.vendor?.name || "there"},</p><p>Please find purchase invoice <strong>${inv.invoiceNumber}</strong> attached for your records.</p><p>Amount: ${new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" }).format(inv.grandTotal || 0)}${inv.dueDate ? " · Due " + new Date(inv.dueDate).toLocaleDateString("en-IN") : ""}.</p><p>Thank you.</p>`,
+        attachments: [{ filename: `${inv.invoiceNumber}.pdf`, content: pdf }],
+    });
+
+    await PurchaseInvoice.findByIdAndUpdate(id, { status: "sent" });
+    return { success: true };
 };

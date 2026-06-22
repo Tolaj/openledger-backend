@@ -31,4 +31,17 @@ export const salesInvoiceController = {
             res.json({ message: "Sales invoice deleted" });
         } catch (err) { next(err); }
     },
+    pdf: async (req, res, next) => {
+        try {
+            const disposition = req.query.disposition || "inline";
+            const pdf = await salesInvoiceService.getSalesInvoicePDF(req.params.id, req.query.groupId);
+            res.set({ "Content-Type": "application/pdf", "Content-Disposition": `${disposition}; filename="${req.params.id}.pdf"` });
+            res.send(pdf);
+        } catch (err) { next(err); }
+    },
+    send: async (req, res, next) => {
+        try {
+            res.json(await salesInvoiceService.sendSalesInvoice(req.params.id, req.query.groupId, req.body));
+        } catch (err) { next(err); }
+    },
 };

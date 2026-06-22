@@ -98,6 +98,14 @@ export const createGRN = async (body) => {
         status: allFull ? "received" : "partial",
     });
 
+    // If this GRN is complete, mark all other partial GRNs for this PO as complete too
+    if (allFull) {
+        await GRN.updateMany(
+            { purchaseOrder: poId, group, _id: { $ne: grn._id }, status: "partial" },
+            { $set: { status: "complete" } }
+        );
+    }
+
     // Stock IN + movement records
     await updateStockIn(items, group);
     for (const item of items) {
@@ -114,6 +122,26 @@ export const createGRN = async (body) => {
     }
 
     return GRN.findById(grn._id)
+        .populate({ path: "purchaseOrder", select: "poNumber vendor", populate: { path: "vendor", select: "name" } })
+        .populate("items.product", "name unit");
+};
+
+export const updateGRN = async (id, groupId, data) => {
+    const grn = await GRN.findOne({ _id: id, group: groupId });
+    if (!grn) throw Object.assign(new Error("GRN not found"), { status: 404 });
+
+    await GRN.findByIdAndUpdate(id, data);
+
+    // When a GRN is marked complete, mark all sibling partial GRNs complete and update PO to received
+    if (data.status === "complete" && grn.purchaseOrder) {
+        await GRN.updateMany(
+            { purchaseOrder: grn.purchaseOrder, group: groupId, _id: { $ne: id }, status: "partial" },
+            { $set: { status: "complete" } }
+        );
+        await PurchaseOrder.findByIdAndUpdate(grn.purchaseOrder, { status: "received" });
+    }
+
+    return GRN.findById(id)
         .populate({ path: "purchaseOrder", select: "poNumber vendor", populate: { path: "vendor", select: "name" } })
         .populate("items.product", "name unit");
 };

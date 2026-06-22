@@ -5,10 +5,12 @@ import { generalOrderController } from "../controllers/generalOrder.controller.j
 const router = Router();
 router.use(requireAuth);
 
-router.get("/",      generalOrderController.getAll);
-router.get("/:id",   generalOrderController.getOne);
-router.post("/",     generalOrderController.create);
-router.put("/:id",   generalOrderController.update);
-router.delete("/:id", generalOrderController.remove);
+router.get("/",           generalOrderController.getAll);
+router.get("/:id/pdf",    generalOrderController.pdf);
+router.get("/:id",        generalOrderController.getOne);
+router.post("/",          generalOrderController.create);
+router.post("/:id/send",  generalOrderController.send);
+router.put("/:id",        generalOrderController.update);
+router.delete("/:id",     generalOrderController.remove);
 
 export default router;

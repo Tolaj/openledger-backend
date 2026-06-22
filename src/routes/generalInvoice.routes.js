@@ -5,10 +5,12 @@ import { generalInvoiceController } from "../controllers/generalInvoice.controll
 const router = Router();
 router.use(requireAuth);
 
-router.get("/",      generalInvoiceController.getAll);
-router.get("/:id",   generalInvoiceController.getOne);
-router.post("/",     generalInvoiceController.create);
-router.put("/:id",   generalInvoiceController.update);
-router.delete("/:id", generalInvoiceController.remove);
+router.get("/",          generalInvoiceController.getAll);
+router.get("/:id/pdf",   generalInvoiceController.pdf);
+router.get("/:id",       generalInvoiceController.getOne);
+router.post("/",         generalInvoiceController.create);
+router.post("/:id/send", generalInvoiceController.send);
+router.put("/:id",       generalInvoiceController.update);
+router.delete("/:id",    generalInvoiceController.remove);
 
 export default router;

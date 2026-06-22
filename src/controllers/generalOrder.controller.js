@@ -28,4 +28,21 @@ export const generalOrderController = {
             res.json({ message: "General order deleted" });
         } catch (err) { next(err); }
     },
+    pdf: async (req, res, next) => {
+        try {
+            const disposition = req.query.disposition || "inline";
+            const pdf = await generalOrderService.getGeneralOrderPDF(req.params.id, req.query.groupId);
+            res.set({
+                "Content-Type": "application/pdf",
+                "Content-Disposition": `${disposition}; filename="${req.params.id}.pdf"`,
+            });
+            res.send(pdf);
+        } catch (err) { next(err); }
+    },
+    send: async (req, res, next) => {
+        try {
+            const result = await generalOrderService.sendGeneralOrder(req.params.id, req.query.groupId, req.body);
+            res.json(result);
+        } catch (err) { next(err); }
+    },
 };

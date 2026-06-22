@@ -5,10 +5,12 @@ import { purchaseInvoiceController } from "../controllers/purchaseInvoice.contro
 const router = Router();
 router.use(requireAuth);
 
-router.get("/",     purchaseInvoiceController.getAll);
-router.get("/:id",  purchaseInvoiceController.getOne);
-router.post("/",    purchaseInvoiceController.create);
-router.put("/:id",  purchaseInvoiceController.update);
-router.delete("/:id", purchaseInvoiceController.remove);
+router.get("/",          purchaseInvoiceController.getAll);
+router.get("/:id/pdf",   purchaseInvoiceController.pdf);
+router.get("/:id",       purchaseInvoiceController.getOne);
+router.post("/",         purchaseInvoiceController.create);
+router.post("/:id/send", purchaseInvoiceController.send);
+router.put("/:id",       purchaseInvoiceController.update);
+router.delete("/:id",    purchaseInvoiceController.remove);
 
 export default router;

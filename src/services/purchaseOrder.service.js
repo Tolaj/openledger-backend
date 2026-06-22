@@ -2,6 +2,7 @@ import PurchaseOrder from "../models/purchaseOrder.model.js";
 import GRN from "../models/grn.model.js";
 import PurchaseInvoice from "../models/purchaseInvoice.model.js";
 import Inventory from "../models/inventory.model.js";
+import Product from "../models/product.model.js";
 import Group from "../models/group.model.js";
 import Counter from "../models/counter.model.js";
 import { sendMail } from "../utils/mailer.js";
@@ -89,9 +90,11 @@ export const updatePurchaseOrder = async (id, groupId, body) => {
                 createdBy: body.createdBy,
             }).save();
 
-            // Update inventory stock IN
+            // Update inventory stock IN (only for tracked products)
             for (const item of existing.items) {
                 if (!item.product || item.qty <= 0) continue;
+                const prod = await Product.findById(item.product).select("inventory");
+                if (!prod?.inventory) continue;
                 const inv = await Inventory.findOne({ product: item.product });
                 if (inv) {
                     inv.quantityAvailable += item.qty;

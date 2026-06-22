@@ -1,6 +1,7 @@
 import GeneralOrder from "../models/generalOrder.model.js";
 import GeneralInvoice from "../models/generalInvoice.model.js";
 import Inventory from "../models/inventory.model.js";
+import Product from "../models/product.model.js";
 import StockMovement from "../models/stockMovement.model.js";
 import Group from "../models/group.model.js";
 import Counter from "../models/counter.model.js";
@@ -33,6 +34,8 @@ const calcTotals = (items = []) => {
 const applyStockIn = async (items, groupId) => {
     for (const item of items) {
         if (!item.product || item.qty <= 0) continue;
+        const prod = await Product.findById(item.product).select("inventory");
+        if (!prod?.inventory) continue;
         const existing = await Inventory.findOne({ product: item.product });
         if (existing) {
             existing.quantityAvailable += item.qty;
@@ -55,6 +58,8 @@ const applyStockIn = async (items, groupId) => {
 const applyStockOut = async (items) => {
     for (const item of items) {
         if (!item.product || item.qty <= 0) continue;
+        const prod = await Product.findById(item.product).select("inventory");
+        if (!prod?.inventory) continue;
         const inv = await Inventory.findOne({ product: item.product });
         if (inv) {
             inv.quantityAvailable = Math.max(0, inv.quantityAvailable - item.qty);
@@ -179,6 +184,8 @@ export const deleteGeneralOrder = async (id, groupId) => {
             // Was stock IN — reverse by deducting
             for (const item of order.items) {
                 if (!item.product || item.qty <= 0) continue;
+                const prod = await Product.findById(item.product).select("inventory");
+                if (!prod?.inventory) continue;
                 const inv = await Inventory.findOne({ product: item.product });
                 if (inv) {
                     inv.quantityAvailable = Math.max(0, inv.quantityAvailable - item.qty);
@@ -190,6 +197,8 @@ export const deleteGeneralOrder = async (id, groupId) => {
             // Was stock OUT — reverse by adding back
             for (const item of order.items) {
                 if (!item.product || item.qty <= 0) continue;
+                const prod = await Product.findById(item.product).select("inventory");
+                if (!prod?.inventory) continue;
                 const inv = await Inventory.findOne({ product: item.product });
                 if (inv) {
                     inv.quantityAvailable += item.qty;

@@ -2,6 +2,7 @@ import SalesOrder from "../models/salesOrder.model.js";
 import Delivery from "../models/delivery.model.js";
 import SalesInvoice from "../models/salesInvoice.model.js";
 import Inventory from "../models/inventory.model.js";
+import Product from "../models/product.model.js";
 import Group from "../models/group.model.js";
 import Counter from "../models/counter.model.js";
 import { sendMail } from "../utils/mailer.js";
@@ -88,9 +89,11 @@ export const updateSalesOrder = async (id, groupId, body) => {
                 createdBy: body.createdBy,
             }).save();
 
-            // Stock OUT
+            // Stock OUT (only for tracked products)
             for (const item of existing.items) {
                 if (!item.product || item.qty <= 0) continue;
+                const prod = await Product.findById(item.product).select("inventory");
+                if (!prod?.inventory) continue;
                 const inv = await Inventory.findOne({ product: item.product });
                 if (inv) {
                     inv.quantityAvailable = Math.max(0, inv.quantityAvailable - item.qty);

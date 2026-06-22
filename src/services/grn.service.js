@@ -1,6 +1,7 @@
 import GRN from "../models/grn.model.js";
 import PurchaseOrder from "../models/purchaseOrder.model.js";
 import Inventory from "../models/inventory.model.js";
+import Product from "../models/product.model.js";
 import StockMovement from "../models/stockMovement.model.js";
 import Group from "../models/group.model.js";
 import Counter from "../models/counter.model.js";
@@ -15,10 +16,12 @@ const nextGrnNumber = async (groupId) => {
     return `GRN-${String(counter.seq).padStart(4, "0")}`;
 };
 
-// Bump stock UP for catalog products that were received
+// Bump stock UP for catalog products that were received (only if inventory tracking is enabled)
 const updateStockIn = async (items, groupId) => {
     for (const item of items) {
         if (!item.product || item.qtyReceived <= 0) continue;
+        const prod = await Product.findById(item.product).select("inventory");
+        if (!prod?.inventory) continue;
         const existing = await Inventory.findOne({ product: item.product });
         if (existing) {
             existing.quantityAvailable += item.qtyReceived;
@@ -106,10 +109,12 @@ export const createGRN = async (body) => {
         );
     }
 
-    // Stock IN + movement records
+    // Stock IN + movement records (only for tracked products)
     await updateStockIn(items, group);
     for (const item of items) {
         if (!item.product || item.qtyReceived <= 0) continue;
+        const prod = await Product.findById(item.product).select("inventory");
+        if (!prod?.inventory) continue;
         await writeMovement({
             group,
             product: item.product,
@@ -150,9 +155,11 @@ export const deleteGRN = async (id, groupId) => {
     const grn = await GRN.findOneAndDelete({ _id: id, group: groupId });
     if (!grn) throw Object.assign(new Error("GRN not found"), { status: 404 });
 
-    // Reverse stock for each received item
+    // Reverse stock for each received item (only if inventory tracking is enabled)
     for (const item of grn.items) {
         if (!item.product || item.qtyReceived <= 0) continue;
+        const prod = await Product.findById(item.product).select("inventory");
+        if (!prod?.inventory) continue;
         const inv = await Inventory.findOne({ product: item.product });
         if (inv) {
             inv.quantityAvailable = Math.max(0, inv.quantityAvailable - item.qtyReceived);

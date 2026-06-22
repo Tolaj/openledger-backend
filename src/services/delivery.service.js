@@ -1,6 +1,7 @@
 import Delivery from "../models/delivery.model.js";
 import SalesOrder from "../models/salesOrder.model.js";
 import Inventory from "../models/inventory.model.js";
+import Product from "../models/product.model.js";
 import StockMovement from "../models/stockMovement.model.js";
 import Counter from "../models/counter.model.js";
 import { writeMovement } from "./stockMovement.service.js";
@@ -38,10 +39,12 @@ const checkStockAvailability = async (items) => {
     }
 };
 
-// Bump stock DOWN for catalog products that were delivered
+// Bump stock DOWN for catalog products that were delivered (only if inventory tracking is enabled)
 const updateStockOut = async (items) => {
     for (const item of items) {
         if (!item.product || item.qtyDelivered <= 0) continue;
+        const prod = await Product.findById(item.product).select("inventory");
+        if (!prod?.inventory) continue;
         const existing = await Inventory.findOne({ product: item.product });
         if (existing) {
             existing.quantityAvailable = Math.max(0, existing.quantityAvailable - item.qtyDelivered);
@@ -168,9 +171,11 @@ export const deleteDelivery = async (id, groupId) => {
     const delivery = await Delivery.findOneAndDelete({ _id: id, group: groupId });
     if (!delivery) throw Object.assign(new Error("Delivery not found"), { status: 404 });
 
-    // Reverse stock: add back quantities that were shipped out
+    // Reverse stock: add back quantities that were shipped out (only if inventory tracking enabled)
     for (const item of delivery.items) {
         if (!item.product || item.qtyDelivered <= 0) continue;
+        const prod = await Product.findById(item.product).select("inventory");
+        if (!prod?.inventory) continue;
         const inv = await Inventory.findOne({ product: item.product });
         if (inv) {
             inv.quantityAvailable += item.qtyDelivered;

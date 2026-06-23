@@ -9,7 +9,7 @@ export const getOne = async (req, res, next) => {
 };
 
 export const create = async (req, res, next) => {
-    try { res.status(201).json(await groupService.createGroup(req.body)); } catch (err) { next(err); }
+    try { res.status(201).json(await groupService.createGroup({ ...req.body, userId: req.user.id })); } catch (err) { next(err); }
 };
 
 export const update = async (req, res, next) => {

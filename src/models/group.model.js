@@ -5,6 +5,7 @@ const groupSchema = new mongoose.Schema(
         name: { type: String, required: true },
         displayName: { type: String },
         type: { type: String, enum: ["personal", "business"], default: "personal" },
+        createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
         members: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
         // Business details (only relevant when type === 'business')
         businessDetails: {

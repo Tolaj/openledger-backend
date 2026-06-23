@@ -16,6 +16,7 @@ export const createGroup = async (body) => {
     data.members = Array.isArray(data.members) ? data.members : [data.members];
     if (data.userId) {
         data.members.push(data.userId);
+        if (!data.createdBy) data.createdBy = data.userId;
         delete data.userId;
     }
     const group = new Group(data);
@@ -42,8 +43,13 @@ export const updateGroup = async (id, body, userId) => {
 };
 
 export const deleteGroup = async (id, userId) => {
-    const group = await Group.findOneAndDelete({ _id: id, members: userId });
+    // First check the group exists and user is a member
+    const group = await Group.findOne({ _id: id, members: userId });
     if (!group) throw Object.assign(new Error("Group not found"), { status: 404 });
+    // Only the creator can delete
+    if (group.createdBy && group.createdBy.toString() !== userId.toString())
+        throw Object.assign(new Error("Only the group creator can delete this group"), { status: 403 });
+    await Group.findOneAndDelete({ _id: id });
 };
 
 // Called during onboarding — creates the user's primary group and marks onboarding complete.
@@ -53,6 +59,7 @@ export const setupPrimaryGroup = async ({ userId, displayName, groupType, accoun
         displayName: displayName,
         type:        groupType || "personal",
         members:     [userId],
+        createdBy:   userId,
     });
     group.$locals = { isNew: true };
     const saved = await group.save();

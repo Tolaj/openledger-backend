@@ -22,11 +22,14 @@ export const remove = async (req, res, next) => {
 
 export const convertCurrency = async (req, res, next) => {
     try {
-        const { rate } = req.body
+        const { rate, groupId, newCurrency } = req.body
         if (!rate || isNaN(rate) || rate <= 0) {
             return res.status(400).json({ error: "Invalid rate" })
         }
-        const result = await productService.convertGroupPrices(req.user.id, parseFloat(rate))
+        if (!groupId) {
+            return res.status(400).json({ error: "groupId is required" })
+        }
+        const result = await productService.convertGroupPrices(groupId, parseFloat(rate), newCurrency)
         res.json(result)
     } catch (err) {
         console.error("convertCurrency error:", err)

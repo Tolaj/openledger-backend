@@ -7,6 +7,11 @@ const groupSchema = new mongoose.Schema(
         type: { type: String, enum: ["personal", "business"], default: "personal" },
         createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
         members: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+        memberRoles: [{
+            userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+            roleId: { type: mongoose.Schema.Types.ObjectId, ref: "Role" },
+        }],
+        currency: { type: String, default: "INR" },   // shared by all group members
         // Business details (only relevant when type === 'business')
         businessDetails: {
             logo:     { type: String },

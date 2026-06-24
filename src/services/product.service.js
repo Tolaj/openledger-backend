@@ -36,13 +36,11 @@ const conv = (val, rate, decimals = 2) => {
  * Covers: Products, Inventory, Wishlists, Orders, Finance, Budgets.
  * rate = multiplier (e.g. 83.5 to go from USD → INR)
  */
-export const convertGroupPrices = async (userId, rate) => {
-    const groups = await Group.find({ members: userId }).select("_id products")
-    if (!groups.length) return { updated: {} }
+export const convertGroupPrices = async (groupId, rate, newCurrency) => {
+    const group = await Group.findById(groupId).select("_id products members")
+    if (!group) return { updated: {} }
 
-    const groupIds = groups.map(g => g._id)
-    const productIds = groups.flatMap(g => g.products)
-
+    const productIds = group.products || []
     const totals = {}
 
     // ── 1. Products ────────────────────────────────────────────────────────────
@@ -60,7 +58,6 @@ export const convertGroupPrices = async (userId, rate) => {
     }
 
     // ── 2. Inventory ───────────────────────────────────────────────────────────
-    // Inventory has no group field — it links to products, so query by product IDs
     const inventories = await Inventory.find({ product: { $in: productIds } })
     if (inventories.length) {
         const ops = inventories
@@ -75,9 +72,10 @@ export const convertGroupPrices = async (userId, rate) => {
     }
 
     // ── 3. Wishlists ───────────────────────────────────────────────────────────
+    const memberIds = group.members || []
     const wishlists = await Wishlist.find({ $or: [
-        { createdBy: userId },
-        { paidBy: userId },
+        { createdBy: { $in: memberIds } },
+        { paidBy: { $in: memberIds } },
     ]})
     if (wishlists.length) {
         const ops = wishlists.map(w => ({
@@ -100,8 +98,8 @@ export const convertGroupPrices = async (userId, rate) => {
 
     // ── 4. Orders ──────────────────────────────────────────────────────────────
     const orders = await Order.find({ $or: [
-        { createdBy: userId },
-        { paidBy: userId },
+        { createdBy: { $in: memberIds } },
+        { paidBy: { $in: memberIds } },
     ]})
     if (orders.length) {
         const ops = orders.map(o => ({
@@ -123,7 +121,7 @@ export const convertGroupPrices = async (userId, rate) => {
     }
 
     // ── 5. Finance transactions ────────────────────────────────────────────────
-    const finances = await Finance.find({ group: { $in: groupIds } })
+    const finances = await Finance.find({ group: groupId })
     if (finances.length) {
         const ops = finances.map(f => ({
             updateOne: {
@@ -148,10 +146,7 @@ export const convertGroupPrices = async (userId, rate) => {
     }
 
     // ── 6. Budgets ─────────────────────────────────────────────────────────────
-    const budgets = await Budget.find({ $or: [
-        { group: { $in: groupIds } },
-        { user: userId },
-    ]})
+    const budgets = await Budget.find({ group: groupId })
     if (budgets.length) {
         const ops = budgets.map(b => ({
             updateOne: {
@@ -171,6 +166,11 @@ export const convertGroupPrices = async (userId, rate) => {
         }))
         await Budget.bulkWrite(ops)
         totals.budgets = ops.length
+    }
+
+    // ── 7. Update the group's currency ─────────────────────────────────────────
+    if (newCurrency) {
+        await Group.findByIdAndUpdate(groupId, { currency: newCurrency })
     }
 
     return { updated: totals }

@@ -1,12 +1,18 @@
 import Group from "../models/group.model.js";
 import User from "../models/user.model.js";
+import Role from "../models/role.model.js";
+import { createAdminRole } from "./role.service.js";
 
 // Only return groups where the requesting user is a member
 export const getAllGroups = (userId) =>
-    Group.find({ members: userId }).populate("members");
+    Group.find({ members: userId })
+         .populate("members")
+         .populate("memberRoles.roleId");
 
 export const getGroupById = async (id, userId) => {
-    const group = await Group.findOne({ _id: id, members: userId }).populate("members");
+    const group = await Group.findOne({ _id: id, members: userId })
+        .populate("members")
+        .populate("memberRoles.roleId");
     if (!group) throw Object.assign(new Error("Group not found"), { status: 404 });
     return group;
 };
@@ -14,14 +20,25 @@ export const getGroupById = async (id, userId) => {
 export const createGroup = async (body) => {
     const data = { ...body };
     data.members = Array.isArray(data.members) ? data.members : [data.members];
-    if (data.userId) {
-        data.members.push(data.userId);
-        if (!data.createdBy) data.createdBy = data.userId;
+    const creatorId = data.userId;
+    if (creatorId) {
+        data.members.push(creatorId);
+        if (!data.createdBy) data.createdBy = creatorId;
         delete data.userId;
     }
     const group = new Group(data);
     group.$locals = { isNew: true };
-    return group.save();
+    const saved = await group.save();
+
+    // Auto-create Admin role for business groups
+    if (saved.type === "business" && creatorId) {
+        const adminRole = await createAdminRole(saved._id, creatorId);
+        await Group.findByIdAndUpdate(saved._id, {
+            $push: { memberRoles: { userId: creatorId, roleId: adminRole._id } },
+        });
+    }
+
+    return Group.findById(saved._id).populate("members").populate("memberRoles.roleId");
 };
 
 export const updateGroup = async (id, body, userId) => {
@@ -33,6 +50,56 @@ export const updateGroup = async (id, body, userId) => {
             delete data.userId;
         }
     }
+
+    // Enforce admin constraints for business groups
+    if (data.memberRoles !== undefined) {
+        const group = await Group.findOne({ _id: id, members: userId });
+        if (!group) throw Object.assign(new Error("Group not found"), { status: 404 });
+
+        if (group.type === "business") {
+            // Find the admin (isSystem) role for this group
+            const adminRole = await Role.findOne({ groupId: id, isSystem: true });
+            if (adminRole) {
+                const adminRoleId = String(adminRole._id);
+                const newMemberRoles = data.memberRoles || [];
+                const adminAssignees = newMemberRoles.filter(
+                    (mr) => String(mr.roleId) === adminRoleId
+                );
+
+                // Must have exactly one admin
+                if (adminAssignees.length === 0) {
+                    throw Object.assign(
+                        new Error("A business workspace must always have exactly one Admin"),
+                        { status: 400 }
+                    );
+                }
+                if (adminAssignees.length > 1) {
+                    throw Object.assign(
+                        new Error("A workspace can only have one Admin"),
+                        { status: 400 }
+                    );
+                }
+
+                // Only the current admin can assign/transfer the admin role
+                const currentAdminEntry = (group.memberRoles || []).find(
+                    (mr) => String(mr.roleId) === adminRoleId
+                );
+                const currentAdminId = currentAdminEntry
+                    ? String(currentAdminEntry.userId)
+                    : String(group.createdBy);
+                const newAdminId = String(adminAssignees[0].userId);
+
+                // If admin is being transferred, the requester must be the current admin
+                if (newAdminId !== currentAdminId && String(userId) !== currentAdminId) {
+                    throw Object.assign(
+                        new Error("Only the current Admin can transfer the Admin role"),
+                        { status: 403 }
+                    );
+                }
+            }
+        }
+    }
+
     const group = await Group.findOneAndUpdate(
         { _id: id, members: userId },
         data,
@@ -71,5 +138,13 @@ export const setupPrimaryGroup = async ({ userId, displayName, groupType, accoun
         ...(businessName ? { businessName } : {}),
     });
 
-    return Group.findById(saved._id).populate("members");
+    // For business groups, auto-create Admin role and assign to creator
+    if ((groupType || "personal") === "business") {
+        const adminRole = await createAdminRole(saved._id, userId);
+        await Group.findByIdAndUpdate(saved._id, {
+            $push: { memberRoles: { userId, roleId: adminRole._id } },
+        });
+    }
+
+    return Group.findById(saved._id).populate("members").populate("memberRoles.roleId");
 };

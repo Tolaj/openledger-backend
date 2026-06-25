@@ -11,6 +11,7 @@ const templateSchema = new mongoose.Schema(
         categories: [
             {
                 name: String,
+                description: String,
                 icon: String,
                 color: String,
             },

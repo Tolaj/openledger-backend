@@ -13,8 +13,10 @@ export const getTemplateStyles = (template = "classic", colorKey = "forest") => 
     const c = COLOR_THEMES[colorKey] || COLOR_THEMES.forest;
 
     const base = `
+  @page { margin: 0; size: A4 portrait; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 13px; color: #18181b; background: #fff; }
+  html { width: 210mm; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 13px; color: #18181b; background: #fff; width: 210mm; }
   .center { text-align: center; }
   .right { text-align: right; }
   table { width: 100%; border-collapse: collapse; margin-bottom: 24px; }
@@ -35,7 +37,8 @@ export const getTemplateStyles = (template = "classic", colorKey = "forest") => 
   .date-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
   .date-value { font-size: 13px; font-weight: 600; color: #09090b; }
   .footer-note { font-size: 11px; color: #a1a1aa; }
-  .brand > div { display: flex; flex-direction: column; }`;
+  .brand > div { display: flex; flex-direction: column; }
+  .brand-contact { display: block; font-size: 11px; color: #a1a1aa; margin-top: 3px; font-weight: 400; line-height: 1.5; }`;
 
     // ── Modern ────────────────────────────────────────────────────────────────────
     if (t === "modern") return base + `
@@ -103,6 +106,7 @@ export const getTemplateStyles = (template = "classic", colorKey = "forest") => 
   .doc-number { font-size: 24px; font-weight: 700; color: #fff; font-variant-numeric: tabular-nums; }
   .doc-date { font-size: 11px; color: rgba(255,255,255,0.55); margin-top: 4px; }
   .status-badge { display: inline-block; margin-top: 6px; background: rgba(255,255,255,0.18); color: #fff; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; padding: 3px 8px; border-radius: 4px; }
+  .brand-contact { color: rgba(255,255,255,0.6); }
   .body { padding: 32px 40px 40px; }
   .divider { display: none; }
   .parties { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 28px; }
@@ -249,15 +253,16 @@ export const getTemplateStyles = (template = "classic", colorKey = "forest") => 
 
     // ── Stripe: accent top + right side stripe, split-panel header ────────────────
     if (t === "stripe") return base + `
-  .page { padding: 0; display: flex; flex-direction: column; min-height: 100%; }
+  .page { padding: 0; }
   .doc-header { display: flex; justify-content: space-between; align-items: stretch; margin-bottom: 0; }
-  .brand { flex: 1; padding: 36px 40px; background: ${c.accent}; color: #fff; }
+  .brand { flex: 1; padding: 36px 40px; background: ${c.accent}; color: #fff; font-size: 22px; font-weight: 700; }
+  .brand > div { flex-direction: column; }
   .brand span { display: block; font-size: 11px; font-weight: 400; color: rgba(255,255,255,0.55); margin-top: 2px; }
+  .brand-contact { color: rgba(255,255,255,0.6); }
   .doc-meta { padding: 36px 40px; background: ${c.light}; text-align: right; min-width: 200px; border-bottom: 4px solid ${c.accent}; }
   .doc-number { font-size: 22px; font-weight: 700; color: ${c.accent}; font-variant-numeric: tabular-nums; }
   .doc-date { font-size: 11px; color: #71717a; margin-top: 4px; }
   .status-badge { display: inline-block; margin-top: 6px; background: ${c.badge}; color: ${c.badgeText}; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; padding: 3px 8px; border-radius: 4px; }
-  .brand { font-size: 22px; font-weight: 700; }
   .divider { display: none; }
   .parties { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 28px; padding: 0 40px; margin-top: 32px; }
   .party-card { padding: 16px; border: 1px solid #e5e7eb; border-top: 3px solid ${c.accent}; border-radius: 0 0 8px 8px; }
@@ -282,7 +287,8 @@ export const getTemplateStyles = (template = "classic", colorKey = "forest") => 
     if (t === "bureau") return base + `
   .page { padding: 40px 48px; }
   .doc-header { display: flex; flex-direction: column; align-items: center; text-align: center; margin-bottom: 0; padding-bottom: 20px; border-top: 4px double ${c.accent}; border-bottom: 4px double ${c.accent}; padding-top: 20px; margin-bottom: 28px; }
-  .brand { font-size: 22px; font-weight: 700; color: ${c.accent}; letter-spacing: -0.5px; text-align: center; }
+  .brand { font-size: 22px; font-weight: 700; color: ${c.accent}; letter-spacing: -0.5px; text-align: center; display: flex !important; flex-direction: column !important; align-items: center; gap: 8px; }
+  .brand > div { align-items: center; }
   .brand span { display: block; font-size: 12px; font-weight: 600; color: #6b7280; letter-spacing: 0.15em; text-transform: uppercase; margin-top: 4px; }
   .doc-meta { text-align: center; margin-top: 12px; }
   .doc-number { font-size: 18px; font-weight: 700; color: #1c1917; font-variant-numeric: tabular-nums; }

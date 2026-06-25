@@ -30,7 +30,6 @@ export const renderPurchaseInvoiceHtml = (inv, group) => {
     const bodyOpen = needsBody ? '<div class="body">' : "";
     const bodyClose = needsBody ? "</div>" : "";
     const divider = needsBody ? "" : '<div class="divider"></div>';
-
     return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -57,15 +56,15 @@ export const renderPurchaseInvoiceHtml = (inv, group) => {
     <div class="party-card">
       <div class="party-label">From (Vendor)</div>
       <div class="party-name">${inv.vendor?.name || "—"}</div>
+      ${inv.vendor?.gstin ? `<div class="party-detail">GSTIN: ${inv.vendor.gstin}</div>` : ""}
       ${inv.vendor?.email ? `<div class="party-detail">${inv.vendor.email}</div>` : ""}
-      ${inv.vendor?.phone ? `<div class="party-detail">${inv.vendor.phone}</div>` : ""}
+      ${inv.vendor?.address ? `<div class="party-detail">${inv.vendor.address}</div>` : ""}
     </div>
     <div class="party-card">
       <div class="party-label">Bill To</div>
       <div class="party-name">${group?.businessDetails?.legalName || group?.name || "—"}</div>
       ${group?.businessDetails?.gstin ? `<div class="party-detail">GSTIN: ${group.businessDetails.gstin}</div>` : ""}
       ${group?.businessDetails?.email || group?.email ? `<div class="party-detail">${group?.businessDetails?.email || group.email}</div>` : ""}
-      ${group?.businessDetails?.phone ? `<div class="party-detail">${group.businessDetails.phone}</div>` : ""}
       ${group?.businessDetails?.addressLine1 ? `<div class="party-detail">${[group.businessDetails.addressLine1, group.businessDetails.city, group.businessDetails.state, group.businessDetails.pincode].filter(Boolean).join(", ")}</div>` : (group?.address ? `<div class="party-detail">${group.address}</div>` : "")}
     </div>
   </div>

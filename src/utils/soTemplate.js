@@ -31,7 +31,6 @@ export const renderSOHtml = (so, group) => {
     const bodyOpen = needsBody ? '<div class="body">' : "";
     const bodyClose = needsBody ? "</div>" : "";
     const divider = needsBody ? "" : '<div class="divider"></div>';
-
     return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -62,14 +61,13 @@ export const renderSOHtml = (so, group) => {
       <div class="party-name">${group?.businessDetails?.legalName || group?.name || "—"}</div>
       ${group?.businessDetails?.gstin ? `<div class="party-detail">GSTIN: ${group.businessDetails.gstin}</div>` : ""}
       ${group?.businessDetails?.email || group?.email ? `<div class="party-detail">${group?.businessDetails?.email || group.email}</div>` : ""}
-      ${group?.businessDetails?.phone ? `<div class="party-detail">${group.businessDetails.phone}</div>` : ""}
       ${group?.businessDetails?.addressLine1 ? `<div class="party-detail">${[group.businessDetails.addressLine1, group.businessDetails.city, group.businessDetails.state, group.businessDetails.pincode].filter(Boolean).join(", ")}</div>` : (group?.address ? `<div class="party-detail">${group.address}</div>` : "")}
     </div>
     <div class="party-card">
       <div class="party-label">To (Customer)</div>
       <div class="party-name">${so.customer?.name || "—"}</div>
+      ${so.customer?.gstin ? `<div class="party-detail">GSTIN: ${so.customer.gstin}</div>` : ""}
       ${so.customer?.email ? `<div class="party-detail">${so.customer.email}</div>` : ""}
-      ${so.customer?.phone ? `<div class="party-detail">${so.customer.phone}</div>` : ""}
       ${so.customer?.address ? `<div class="party-detail">${so.customer.address}</div>` : ""}
     </div>
   </div>

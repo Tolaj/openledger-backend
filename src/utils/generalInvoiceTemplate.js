@@ -31,7 +31,6 @@ export const renderGeneralInvoiceHtml = (inv, group) => {
     const bodyOpen = needsBody ? '<div class="body">' : "";
     const bodyClose = needsBody ? "</div>" : "";
     const divider = needsBody ? "" : '<div class="divider"></div>';
-
     return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -62,14 +61,13 @@ export const renderGeneralInvoiceHtml = (inv, group) => {
       <div class="party-name">${group?.businessDetails?.legalName || group?.name || "—"}</div>
       ${group?.businessDetails?.gstin ? `<div class="party-detail">GSTIN: ${group.businessDetails.gstin}</div>` : ""}
       ${group?.businessDetails?.email || group?.email ? `<div class="party-detail">${group?.businessDetails?.email || group.email}</div>` : ""}
-      ${group?.businessDetails?.phone ? `<div class="party-detail">${group.businessDetails.phone}</div>` : ""}
       ${group?.businessDetails?.addressLine1 ? `<div class="party-detail">${[group.businessDetails.addressLine1, group.businessDetails.city, group.businessDetails.state, group.businessDetails.pincode].filter(Boolean).join(", ")}</div>` : (group?.address ? `<div class="party-detail">${group.address}</div>` : "")}
     </div>
     <div class="party-card">
       <div class="party-label">Recipient</div>
       <div class="party-name">${inv.recipient?.name || "—"}</div>
+      ${inv.recipient?.gstin ? `<div class="party-detail">GSTIN: ${inv.recipient.gstin}</div>` : ""}
       ${inv.recipient?.email ? `<div class="party-detail">${inv.recipient.email}</div>` : ""}
-      ${inv.recipient?.phone ? `<div class="party-detail">${inv.recipient.phone}</div>` : ""}
     </div>
   </div>
   <div class="dates">

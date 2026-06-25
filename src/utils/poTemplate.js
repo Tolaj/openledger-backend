@@ -31,7 +31,6 @@ export const renderPOHtml = (po, group) => {
     const bodyOpen = needsBody ? '<div class="body">' : "";
     const bodyClose = needsBody ? "</div>" : "";
     const divider = needsBody ? "" : '<div class="divider"></div>';
-
     return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -62,16 +61,14 @@ export const renderPOHtml = (po, group) => {
       <div class="party-name">${group?.businessDetails?.legalName || group?.name || "—"}</div>
       ${group?.businessDetails?.gstin ? `<div class="party-detail">GSTIN: ${group.businessDetails.gstin}</div>` : ""}
       ${group?.businessDetails?.email || group?.email ? `<div class="party-detail">${group?.businessDetails?.email || group.email}</div>` : ""}
-      ${group?.businessDetails?.phone ? `<div class="party-detail">${group.businessDetails.phone}</div>` : ""}
       ${group?.businessDetails?.addressLine1 ? `<div class="party-detail">${[group.businessDetails.addressLine1, group.businessDetails.city, group.businessDetails.state, group.businessDetails.pincode].filter(Boolean).join(", ")}</div>` : (group?.address ? `<div class="party-detail">${group.address}</div>` : "")}
     </div>
     <div class="party-card">
       <div class="party-label">To (Vendor)</div>
       <div class="party-name">${po.vendor?.name || "—"}</div>
-      ${po.vendor?.email ? `<div class="party-detail">${po.vendor.email}</div>` : ""}
-      ${po.vendor?.phone ? `<div class="party-detail">${po.vendor.phone}</div>` : ""}
-      ${po.vendor?.address ? `<div class="party-detail">${po.vendor.address}</div>` : ""}
       ${po.vendor?.gstin ? `<div class="party-detail">GSTIN: ${po.vendor.gstin}</div>` : ""}
+      ${po.vendor?.email ? `<div class="party-detail">${po.vendor.email}</div>` : ""}
+      ${po.vendor?.address ? `<div class="party-detail">${po.vendor.address}</div>` : ""}
     </div>
   </div>
 

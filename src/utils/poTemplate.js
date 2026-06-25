@@ -1,4 +1,4 @@
-import { getTemplateStyles } from "./templateStyles.js";
+import { getTemplateStyles, buildReceiptHtml } from "./templateStyles.js";
 
 export const renderPOHtml = (po, group) => {
     const fmt = (n) =>
@@ -26,6 +26,19 @@ export const renderPOHtml = (po, group) => {
     });
 
     const tmpl = group?.businessDetails?.orderTemplate || group?.businessDetails?.template || "classic";
+
+    if (tmpl === "receipt") return buildReceiptHtml({
+        docType: "Purchase Order", docNumber: po.poNumber, docDate: new Date(po.createdAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }), status: po.status,
+        bizName: group?.businessDetails?.legalName || group?.name || "OpenLedger",
+        bizLogo: group?.businessDetails?.logo,
+        bizAddress: [group?.businessDetails?.addressLine1, group?.businessDetails?.city].filter(Boolean).join(", ") || group?.address,
+        bizGstin: group?.businessDetails?.gstin,
+        partyLabel: "Vendor", partyName: po.vendor?.name,
+        partyGstin: po.vendor?.gstin, partyEmail: po.vendor?.email, partyAddress: po.vendor?.address,
+        items: (po.items || []).map(it => ({ name: it.product?.name || it.description, qty: it.qty, amount: it.amount })),
+        subtotal: po.subtotal, taxAmount: po.taxAmount, grandTotal: po.grandTotal, fmt, notes: po.notes,
+    });
+
     const needsBody = tmpl === "modern" || tmpl === "executive";
     const modern = tmpl === "modern";
     const bodyOpen = needsBody ? '<div class="body">' : "";

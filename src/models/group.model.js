@@ -15,8 +15,8 @@ const groupSchema = new mongoose.Schema(
         // Business details (only relevant when type === 'business')
         businessDetails: {
             logo:     { type: String },
-            template:      { type: String, enum: ["classic", "modern", "minimal", "executive", "bold", "elegant", "retro", "compact", "stripe", "bureau"], default: "classic" },
-            orderTemplate: { type: String, enum: ["classic", "modern", "minimal", "executive", "bold", "elegant", "retro", "compact", "stripe", "bureau"], default: "classic" },
+            template:      { type: String, enum: ["classic", "modern", "minimal", "executive", "bold", "elegant", "retro", "compact", "stripe", "bureau", "receipt"], default: "classic" },
+            orderTemplate: { type: String, enum: ["classic", "modern", "minimal", "executive", "bold", "elegant", "retro", "compact", "stripe", "bureau", "receipt"], default: "classic" },
             color:    { type: String, default: "forest" },
             emailEnabled: { type: Boolean, default: false },
             smtpUser:     { type: String },

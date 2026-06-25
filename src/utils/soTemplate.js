@@ -1,4 +1,4 @@
-import { getTemplateStyles } from "./templateStyles.js";
+import { getTemplateStyles, buildReceiptHtml } from "./templateStyles.js";
 
 export const renderSOHtml = (so, group) => {
     const fmt = (n) =>
@@ -26,6 +26,19 @@ export const renderSOHtml = (so, group) => {
     });
 
     const tmpl = group?.businessDetails?.orderTemplate || group?.businessDetails?.template || "classic";
+
+    if (tmpl === "receipt") return buildReceiptHtml({
+        docType: "Sales Order", docNumber: so.soNumber, docDate: createdDate, status: so.status,
+        bizName: group?.businessDetails?.legalName || group?.name || "OpenLedger",
+        bizLogo: group?.businessDetails?.logo,
+        bizAddress: [group?.businessDetails?.addressLine1, group?.businessDetails?.city].filter(Boolean).join(", ") || group?.address,
+        bizGstin: group?.businessDetails?.gstin,
+        partyLabel: "Customer", partyName: so.customer?.name,
+        partyGstin: so.customer?.gstin, partyEmail: so.customer?.email, partyAddress: so.customer?.address,
+        items: (so.items || []).map(it => ({ name: it.product?.name || it.description, qty: it.qty, amount: it.amount })),
+        subtotal: so.subtotal, taxAmount: so.taxAmount, grandTotal: so.grandTotal, fmt, notes: so.notes,
+    });
+
     const needsBody = tmpl === "modern" || tmpl === "executive";
     const modern = tmpl === "modern";
     const bodyOpen = needsBody ? '<div class="body">' : "";

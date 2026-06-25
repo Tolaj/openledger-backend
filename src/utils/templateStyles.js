@@ -314,6 +314,41 @@ export const getTemplateStyles = (template = "classic", colorKey = "forest") => 
   .notes-text { color: #4b5563; }
   .footer { border-top: 4px double ${c.accent}; padding-top: 14px; display: flex; justify-content: space-between; align-items: center; }`;
 
+    // ── Thermal Receipt ───────────────────────────────────────────────────────────
+    if (t === "receipt") return `
+  @page { margin: 0; size: A4 portrait; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { width: 210mm; }
+  body { font-family: 'Courier New', Courier, monospace; font-size: 12px; color: #111; background: #fff; width: 210mm; }
+  .page { padding: 40px 0; display: flex; justify-content: center; }
+  .receipt-slip { width: 320px; }
+  .receipt-header { text-align: center; margin-bottom: 12px; }
+  .receipt-logo { display: block; margin: 0 auto 8px; max-height: 56px; max-width: 120px; object-fit: contain; }
+  .receipt-brand { font-size: 16px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+  .receipt-sub { font-size: 10px; color: #555; margin-top: 2px; }
+  .receipt-dash { border: none; border-top: 1px dashed #999; margin: 10px 0; }
+  .receipt-doc-type { text-align: center; font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; color: #333; }
+  .receipt-meta { font-size: 10px; color: #444; margin-bottom: 10px; }
+  .receipt-meta div { display: flex; justify-content: space-between; padding: 1px 0; }
+  .receipt-party { font-size: 10px; margin-bottom: 10px; }
+  .receipt-party-label { font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; font-size: 9px; color: #777; margin-bottom: 2px; }
+  .receipt-items { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
+  .receipt-items thead tr { border-top: 1px dashed #999; border-bottom: 1px dashed #999; }
+  .receipt-items thead th { font-size: 9px; font-weight: 700; text-transform: uppercase; padding: 4px 0; letter-spacing: 0.5px; }
+  .receipt-items thead th:last-child { text-align: right; }
+  .receipt-items tbody td { font-size: 11px; padding: 3px 0; vertical-align: top; }
+  .receipt-items tbody td:last-child { text-align: right; white-space: nowrap; }
+  .receipt-items tbody td.desc { max-width: 160px; }
+  .receipt-items tbody td.qty { text-align: center; width: 36px; font-size: 10px; color: #555; }
+  .receipt-totals { font-size: 11px; }
+  .receipt-totals div { display: flex; justify-content: space-between; padding: 2px 0; }
+  .receipt-totals .grand { font-weight: 700; font-size: 13px; border-top: 1px dashed #999; margin-top: 4px; padding-top: 6px; }
+  .receipt-grand-label { letter-spacing: 1px; text-transform: uppercase; }
+  .receipt-badge { display: inline-block; border: 1px solid #111; font-size: 9px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; padding: 2px 8px; margin: 6px auto; }
+  .receipt-footer { text-align: center; font-size: 10px; color: #666; margin-top: 12px; }
+  .receipt-footer .thanks { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: #111; margin-bottom: 4px; }
+  .receipt-barcode { font-family: 'Courier New', monospace; font-size: 8px; letter-spacing: 3px; color: #333; margin-top: 6px; }`;
+
     // ── Classic (default) ─────────────────────────────────────────────────────────
     return base + `
   .page { padding: 40px; }
@@ -344,3 +379,66 @@ export const getTemplateStyles = (template = "classic", colorKey = "forest") => 
 };
 
 export const needsBodyWrapper = (t) => (t === "modern" || t === "executive");
+
+export const buildReceiptHtml = ({ docType, docNumber, docDate, status, bizName, bizLogo, bizAddress, bizGstin, partyLabel, partyName, partyGstin, partyEmail, partyAddress, items, subtotal, taxAmount, grandTotal, fmt, notes }) => {
+    const receiptRows = items.map(it => `
+        <tr>
+            <td class="desc">${it.name || it.description || "—"}</td>
+            <td class="qty">${it.qty ?? 1}</td>
+            <td style="text-align:right;">${fmt(it.amount)}</td>
+        </tr>`).join("");
+
+    const txnId = docNumber?.replace(/[^0-9]/g, "").slice(-10).padStart(10, "0") || "0000000000";
+
+    return `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8" />
+<style>${getTemplateStyles("receipt")}</style>
+</head>
+<body>
+<div class="page">
+  <div class="receipt-slip">
+    <div class="receipt-header">
+      ${bizLogo ? `<img src="${bizLogo}" class="receipt-logo" />` : ""}
+      <div class="receipt-brand">${bizName}</div>
+      ${bizAddress ? `<div class="receipt-sub">${bizAddress}</div>` : ""}
+      ${bizGstin ? `<div class="receipt-sub">GSTIN: ${bizGstin}</div>` : ""}
+    </div>
+    <hr class="receipt-dash" />
+    <div class="receipt-doc-type">${docType}</div>
+    <div class="receipt-meta">
+      <div><span>#</span><span>${docNumber}</span></div>
+      <div><span>Date</span><span>${docDate}</span></div>
+      ${status ? `<div><span>Status</span><span style="font-weight:700;text-transform:uppercase;">${status}</span></div>` : ""}
+    </div>
+    ${partyName ? `<hr class="receipt-dash" />
+    <div class="receipt-party">
+      <div class="receipt-party-label">${partyLabel}</div>
+      <div>${partyName}</div>
+      ${partyGstin ? `<div>GSTIN: ${partyGstin}</div>` : ""}
+      ${partyEmail ? `<div>${partyEmail}</div>` : ""}
+      ${partyAddress ? `<div>${partyAddress}</div>` : ""}
+    </div>` : ""}
+    <hr class="receipt-dash" />
+    <table class="receipt-items">
+      <thead><tr><th>Item</th><th style="text-align:center;">Qty</th><th style="text-align:right;">Amt</th></tr></thead>
+      <tbody>${receiptRows}</tbody>
+    </table>
+    <hr class="receipt-dash" />
+    <div class="receipt-totals">
+      <div><span>Subtotal</span><span>${fmt(subtotal)}</span></div>
+      <div><span>Tax</span><span>${fmt(taxAmount)}</span></div>
+      <div class="grand"><span class="receipt-grand-label">Total</span><span>${fmt(grandTotal)}</span></div>
+    </div>
+    ${notes ? `<hr class="receipt-dash" /><div style="font-size:10px;color:#555;">${notes}</div>` : ""}
+    <hr class="receipt-dash" />
+    <div class="receipt-footer">
+      <div class="thanks">Thank You!</div>
+      <div>Generated by OpenLedger</div>
+      <div class="receipt-barcode">| ${txnId} |</div>
+    </div>
+  </div>
+</div>
+</body>
+</html>`;
+};

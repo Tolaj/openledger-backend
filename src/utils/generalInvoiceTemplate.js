@@ -1,4 +1,4 @@
-import { getTemplateStyles } from "./templateStyles.js";
+import { getTemplateStyles, buildReceiptHtml } from "./templateStyles.js";
 
 export const renderGeneralInvoiceHtml = (inv, group) => {
     const fmt = (n) =>
@@ -26,6 +26,19 @@ export const renderGeneralInvoiceHtml = (inv, group) => {
     const statusColor = inv.status === "paid" ? "#16a34a" : inv.status === "overdue" ? "#dc2626" : "#52525b";
 
     const tmpl = group?.businessDetails?.orderTemplate || group?.businessDetails?.template || "classic";
+
+    if (tmpl === "receipt") return buildReceiptHtml({
+        docType: "General Invoice", docNumber: inv.invoiceNumber, docDate: invoiceDate, status: inv.status,
+        bizName: group?.businessDetails?.legalName || group?.name || "OpenLedger",
+        bizLogo: group?.businessDetails?.logo,
+        bizAddress: [group?.businessDetails?.addressLine1, group?.businessDetails?.city].filter(Boolean).join(", ") || group?.address,
+        bizGstin: group?.businessDetails?.gstin,
+        partyLabel: "Recipient", partyName: inv.recipient?.name,
+        partyGstin: inv.recipient?.gstin, partyEmail: inv.recipient?.email, partyAddress: null,
+        items: (inv.items || []).map(it => ({ name: it.product?.name || it.description, qty: it.qty, amount: it.amount })),
+        subtotal: inv.subtotal, taxAmount: inv.taxAmount, grandTotal: inv.grandTotal, fmt, notes: inv.notes,
+    });
+
     const needsBody = tmpl === "modern" || tmpl === "executive";
     const modern = tmpl === "modern";
     const bodyOpen = needsBody ? '<div class="body">' : "";

@@ -33,7 +33,7 @@ export const getGroupById = async (id, userId) => {
 
 export const createGroup = async (body) => {
     const data = encryptSmtp({ ...body });
-    data.members = Array.isArray(data.members) ? data.members : [data.members];
+    data.members = (Array.isArray(data.members) ? data.members : [data.members]).filter(Boolean);
     const creatorId = data.userId;
     if (creatorId) {
         data.members.push(creatorId);
@@ -58,7 +58,7 @@ export const createGroup = async (body) => {
 export const updateGroup = async (id, body, userId) => {
     const data = encryptSmtp({ ...body });
     if (data.members) {
-        data.members = Array.isArray(data.members) ? data.members : [data.members];
+        data.members = (Array.isArray(data.members) ? data.members : [data.members]).filter(Boolean);
         if (data.userId) {
             data.members.push(data.userId);
             delete data.userId;

@@ -24,7 +24,7 @@ export const renderPurchaseInvoiceHtml = (inv, group) => {
 
     const statusColor = inv.status === "paid" ? "#16a34a" : inv.status === "overdue" ? "#dc2626" : "#52525b";
 
-    const tmpl = group?.businessDetails?.template || "classic";
+    const tmpl = group?.businessDetails?.poTemplate || group?.businessDetails?.template || "classic";
     const needsBody = tmpl === "modern" || tmpl === "executive";
     const modern = tmpl === "modern";
     const bodyOpen = needsBody ? '<div class="body">' : "";

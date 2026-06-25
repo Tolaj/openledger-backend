@@ -25,7 +25,7 @@ export const renderPOHtml = (po, group) => {
         day: "2-digit", month: "short", year: "numeric",
     });
 
-    const tmpl = group?.businessDetails?.template || "classic";
+    const tmpl = group?.businessDetails?.orderTemplate || group?.businessDetails?.template || "classic";
     const needsBody = tmpl === "modern" || tmpl === "executive";
     const modern = tmpl === "modern";
     const bodyOpen = needsBody ? '<div class="body">' : "";

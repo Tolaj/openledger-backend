@@ -237,7 +237,7 @@ export const sendGeneralOrder = async (id, groupId, { recipientEmail } = {}) => 
 
     const dirLabel = go.direction === "payable" ? "Purchase" : "Sales";
 
-    await sendMail({
+    await sendMail({ smtpConfig: group?.businessDetails,
         to: toEmail,
         subject: `${dirLabel} Order ${go.goNumber} from ${group?.name || "OpenLedger"}`,
         html: `<p>Hi ${go.recipient?.name || "there"},</p><p>Please find attached the general order <strong>${go.goNumber}</strong>.</p><p>Thank you.</p>`,

@@ -211,7 +211,7 @@ export const sendPurchaseInvoice = async (id, groupId, { recipientEmail } = {}) 
     const group = await Group.findById(groupId).lean();
     const pdf   = await generatePDF(renderPurchaseInvoiceHtml(inv.toObject(), group));
 
-    await sendMail({
+    await sendMail({ smtpConfig: group?.businessDetails,
         to: toEmail,
         subject: `Purchase Invoice ${inv.invoiceNumber} from ${group?.name || "OpenLedger"}`,
         html: `<p>Hi ${inv.vendor?.name || "there"},</p><p>Please find purchase invoice <strong>${inv.invoiceNumber}</strong> attached for your records.</p><p>Amount: ${new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" }).format(inv.grandTotal || 0)}${inv.dueDate ? " · Due " + new Date(inv.dueDate).toLocaleDateString("en-IN") : ""}.</p><p>Thank you.</p>`,

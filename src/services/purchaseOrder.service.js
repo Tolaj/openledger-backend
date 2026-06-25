@@ -204,7 +204,7 @@ export const sendPurchaseOrder = async (id, groupId, { recipientEmail } = {}) =>
     const pdfBuffer = await generatePDF(html);
 
     // Send email
-    await sendMail({
+    await sendMail({ smtpConfig: group?.businessDetails,
         to: toEmail,
         subject: `Purchase Order ${po.poNumber} from ${group?.name || "OpenLedger"}`,
         html: `

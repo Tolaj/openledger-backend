@@ -17,6 +17,9 @@ const groupSchema = new mongoose.Schema(
             logo:     { type: String },
             template: { type: String, enum: ["classic", "modern", "minimal", "executive", "bold", "elegant", "retro", "compact", "stripe", "bureau"], default: "classic" },
             color:    { type: String, default: "forest" },
+            emailEnabled: { type: Boolean, default: false },
+            smtpUser:     { type: String },
+            smtpPass:     { type: String },   // stored but never returned to client
             legalName:   { type: String },
             gstin:       { type: String },
             pan:         { type: String },
@@ -38,7 +41,18 @@ const groupSchema = new mongoose.Schema(
         finances: [{ type: mongoose.Schema.Types.ObjectId, ref: "Finance" }],
         resourcePlans: [{ type: mongoose.Schema.Types.ObjectId, ref: "ResourcePlan" }],
     },
-    { timestamps: true }
+    {
+        timestamps: true,
+        toJSON: {
+            transform(doc, ret) {
+                if (ret.businessDetails) {
+                    ret.businessDetails.smtpConfigured = !!(ret.businessDetails.smtpUser && ret.businessDetails.smtpPass)
+                    delete ret.businessDetails.smtpPass
+                }
+                return ret
+            }
+        }
+    }
 );
 
 groupSchema.post("save", async function (doc) {

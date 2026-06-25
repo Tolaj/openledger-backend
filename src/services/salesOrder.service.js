@@ -191,7 +191,7 @@ export const sendSalesOrder = async (id, groupId, { recipientEmail } = {}) => {
     const html = renderSOHtml(so.toObject(), group);
     const pdfBuffer = await generatePDF(html);
 
-    await sendMail({
+    await sendMail({ smtpConfig: group?.businessDetails,
         to: toEmail,
         subject: `Sales Order ${so.soNumber} from ${group?.name || "OpenLedger"}`,
         html: `

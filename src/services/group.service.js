@@ -2,6 +2,20 @@ import Group from "../models/group.model.js";
 import User from "../models/user.model.js";
 import Role from "../models/role.model.js";
 import { createAdminRole } from "./role.service.js";
+import { encrypt } from "../utils/encrypt.js";
+
+const encryptSmtp = (data) => {
+    const pass = data?.businessDetails?.smtpPass
+    if (pass === '__CLEAR__') {
+        // Explicit credential removal — wipe both fields
+        data.businessDetails.smtpPass = ''
+        data.businessDetails.smtpUser = ''
+        data.businessDetails.emailEnabled = false
+    } else if (pass) {
+        data.businessDetails.smtpPass = encrypt(pass)
+    }
+    return data
+};
 
 // Only return groups where the requesting user is a member
 export const getAllGroups = (userId) =>
@@ -18,7 +32,7 @@ export const getGroupById = async (id, userId) => {
 };
 
 export const createGroup = async (body) => {
-    const data = { ...body };
+    const data = encryptSmtp({ ...body });
     data.members = Array.isArray(data.members) ? data.members : [data.members];
     const creatorId = data.userId;
     if (creatorId) {
@@ -42,7 +56,7 @@ export const createGroup = async (body) => {
 };
 
 export const updateGroup = async (id, body, userId) => {
-    const data = { ...body };
+    const data = encryptSmtp({ ...body });
     if (data.members) {
         data.members = Array.isArray(data.members) ? data.members : [data.members];
         if (data.userId) {

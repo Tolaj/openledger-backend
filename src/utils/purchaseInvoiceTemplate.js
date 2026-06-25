@@ -41,10 +41,9 @@ export const renderPurchaseInvoiceHtml = (inv, group) => {
 <body>
 <div class="page">
   <div class="doc-header">
-    <div class="brand">
-      ${group?.businessDetails?.logo ? `<img src="${group.businessDetails.logo}" style="max-height:48px;max-width:120px;object-fit:contain;margin-bottom:4px;" />` : ""}
-      ${group?.businessDetails?.legalName || group?.name || "OpenLedger"}
-      <span>Purchase Invoice</span>
+    <div class="brand" style="display:flex;align-items:center;gap:16px;">
+      ${group?.businessDetails?.logo ? `<img src="${group.businessDetails.logo}" style="height:64px;width:64px;object-fit:contain;border-radius:8px;flex-shrink:0;" />` : ""}
+      <div>${group?.businessDetails?.legalName || group?.name || "OpenLedger"}<span>Purchase Invoice</span></div>
     </div>
     <div class="doc-meta">
       <div class="doc-number">${inv.invoiceNumber}</div>

@@ -34,7 +34,8 @@ export const getTemplateStyles = (template = "classic", colorKey = "forest") => 
   .party-detail { font-size: 12px; color: #52525b; line-height: 1.6; }
   .date-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
   .date-value { font-size: 13px; font-weight: 600; color: #09090b; }
-  .footer-note { font-size: 11px; color: #a1a1aa; }`;
+  .footer-note { font-size: 11px; color: #a1a1aa; }
+  .brand > div { display: flex; flex-direction: column; }`;
 
     // ── Modern ────────────────────────────────────────────────────────────────────
     if (t === "modern") return base + `

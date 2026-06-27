@@ -34,6 +34,8 @@ const groupSchema = new mongoose.Schema(
             pincode:     { type: String },
             country:     { type: String, default: "India" },
         },
+        geminiApiKey:  { type: String },   // stored encrypted, never returned to client
+        aiEnabled:     { type: Boolean, default: false },
         orders: [{ type: mongoose.Schema.Types.ObjectId, ref: "Order" }],
         wishlists: [{ type: mongoose.Schema.Types.ObjectId, ref: "Wishlist" }],
         categories: [{ type: mongoose.Schema.Types.ObjectId, ref: "Category" }],
@@ -50,6 +52,8 @@ const groupSchema = new mongoose.Schema(
                     ret.businessDetails.smtpConfigured = !!(ret.businessDetails.smtpUser && ret.businessDetails.smtpPass)
                     delete ret.businessDetails.smtpPass
                 }
+                ret.geminiConfigured = !!ret.geminiApiKey
+                delete ret.geminiApiKey
                 return ret
             }
         }

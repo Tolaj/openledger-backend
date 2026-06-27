@@ -7,7 +7,6 @@ import { encrypt } from "../utils/encrypt.js";
 const encryptSmtp = (data) => {
     const pass = data?.businessDetails?.smtpPass
     if (pass === '__CLEAR__') {
-        // Explicit credential removal — wipe both fields
         data.businessDetails.smtpPass = ''
         data.businessDetails.smtpUser = ''
         data.businessDetails.emailEnabled = false
@@ -15,6 +14,18 @@ const encryptSmtp = (data) => {
         data.businessDetails.smtpPass = encrypt(pass)
     }
     return data
+};
+
+const encryptGemini = (data) => {
+    if (data.geminiApiKey === '__CLEAR__') {
+        data.geminiApiKey = ''
+    }
+    return data
+};
+
+export const getDecryptedGeminiKey = async (groupId) => {
+    const group = await Group.findById(groupId).select("geminiApiKey").lean()
+    return group?.geminiApiKey || null
 };
 
 // Only return groups where the requesting user is a member
@@ -32,7 +43,7 @@ export const getGroupById = async (id, userId) => {
 };
 
 export const createGroup = async (body) => {
-    const data = encryptSmtp({ ...body });
+    const data = encryptGemini(encryptSmtp({ ...body }));
     data.members = (Array.isArray(data.members) ? data.members : [data.members]).filter(Boolean);
     const creatorId = data.userId;
     if (creatorId) {
@@ -56,7 +67,7 @@ export const createGroup = async (body) => {
 };
 
 export const updateGroup = async (id, body, userId) => {
-    const data = encryptSmtp({ ...body });
+    const data = encryptGemini(encryptSmtp({ ...body }));
     if (data.members) {
         data.members = (Array.isArray(data.members) ? data.members : [data.members]).filter(Boolean);
         if (data.userId) {

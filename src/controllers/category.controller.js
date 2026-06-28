@@ -1,7 +1,7 @@
 import { categoryService } from "../services/index.js";
 
 export const getAll = async (req, res, next) => {
-    try { res.json(await categoryService.getAllCategories()); } catch (err) { next(err); }
+    try { res.json(await categoryService.getAllCategories(req.query.groupId)); } catch (err) { next(err); }
 };
 
 export const getOne = async (req, res, next) => {

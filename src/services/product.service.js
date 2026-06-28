@@ -6,7 +6,14 @@ import Finance from "../models/finance.model.js";
 import Budget from "../models/budget.model.js";
 import Group from "../models/group.model.js";
 
-export const getAllProducts = () => Product.find().populate("category");
+export const getAllProducts = async (groupId) => {
+    if (groupId) {
+        const group = await Group.findById(groupId).select("products")
+        const ids = group?.products || []
+        return Product.find({ _id: { $in: ids } }).populate("category")
+    }
+    return Product.find().populate("category")
+};
 
 export const getProductById = async (id) => {
     const product = await Product.findById(id).populate("category");

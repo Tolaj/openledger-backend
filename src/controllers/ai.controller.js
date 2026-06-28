@@ -29,17 +29,19 @@ export const scanReceipt = async (req, res, next) => {
         if (!imageBase64 || !mimeType) return res.status(400).json({ error: "imageBase64 and mimeType are required" });
 
         let products = [];
+        let aiModel = null;
         if (groupId) {
-            const group = await Group.findById(groupId).select("products");
+            const group = await Group.findById(groupId).select("products aiModel");
+            aiModel = group?.aiModel || null;
             if (group?.products?.length) {
                 products = await Product.find({ _id: { $in: group.products } }).select("_id name unit price").lean();
             }
         }
 
         const apiKey = groupId ? await getDecryptedGeminiKey(groupId) : null;
-        const result = await gemini.scanReceipt(imageBase64, mimeType, products, apiKey);
+        const result = await gemini.scanReceipt(imageBase64, mimeType, products, apiKey, aiModel);
         res.json(result);
-    } catch (err) { next(geminiError(err, !!groupId)); }
+    } catch (err) { next(geminiError(err, !!req.body?.groupId)); }
 };
 
 // ── Product auto-suggest ───────────────────────────────────────────────────────
@@ -59,7 +61,7 @@ export const suggestProduct = async (req, res, next) => {
         const apiKey = groupId ? await getDecryptedGeminiKey(groupId) : null;
         const result = await gemini.suggestProduct(productName, categories, apiKey);
         res.json(result);
-    } catch (err) { next(geminiError(err, !!groupId)); }
+    } catch (err) { next(geminiError(err, !!req.body?.groupId)); }
 };
 
 // ── Financial insights ─────────────────────────────────────────────────────────

@@ -35,6 +35,7 @@ const groupSchema = new mongoose.Schema(
             country:     { type: String, default: "India" },
         },
         geminiApiKey:  { type: String },   // stored encrypted, never returned to client
+        aiModel:       { type: String, default: 'gemini-3.1-flash-lite-preview' },
         aiEnabled:     { type: Boolean, default: false },
         orders: [{ type: mongoose.Schema.Types.ObjectId, ref: "Order" }],
         wishlists: [{ type: mongoose.Schema.Types.ObjectId, ref: "Wishlist" }],

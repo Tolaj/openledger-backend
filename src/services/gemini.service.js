@@ -1,13 +1,14 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
+const DEFAULT_MODEL = "gemini-3.1-flash-lite-preview";
 const getClient = (apiKey) => new GoogleGenerativeAI(apiKey || process.env.GEMINI_API_KEY || "");
-const flash = (apiKey) => getClient(apiKey).getGenerativeModel({ model: "gemini-2.5-flash" });
+const flash = (apiKey, model) => getClient(apiKey).getGenerativeModel({ model: model || DEFAULT_MODEL });
 
 // ── Receipt scan ───────────────────────────────────────────────────────────────
 // imageBase64: base64-encoded image string (no data: prefix)
 // mimeType: e.g. "image/jpeg"
 // products: optional array of existing products {_id, name, unit, price} to match against
-export const scanReceipt = async (imageBase64, mimeType, products = [], apiKey) => {
+export const scanReceipt = async (imageBase64, mimeType, products = [], apiKey, model) => {
     const productHint = products.length
         ? `\nKnown products in catalog (try to match by name):\n${products.map((p) => `- id:${p._id} name:"${p.name}" unit:${p.unit || "pcs"} price:${p.price}`).join("\n")}`
         : "";
@@ -38,7 +39,7 @@ Rules:
 - taxRate is percentage (e.g. 18 for 18%), 0 if unknown
 - matchedProductId: only set if name is a confident match to a catalog product`;
 
-    const result = await flash(apiKey).generateContent([
+    const result = await flash(apiKey, model).generateContent([
         prompt,
         { inlineData: { mimeType, data: imageBase64 } },
     ]);

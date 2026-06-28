@@ -27,6 +27,7 @@ import recurringRoutes from "./recurring.routes.js";
 import stockMovementRoutes from "./stockMovement.routes.js";
 import roleRoutes from "./role.routes.js";
 import aiRoutes from "./ai.routes.js";
+import clientAiRoutes from "./client-ai.routes.js";
 
 const configRoutes = (app) => {
     app.get("/", (req, res) => {
@@ -85,6 +86,7 @@ const configRoutes = (app) => {
     app.use("/api/stock-movements", stockMovementRoutes);
     app.use("/api/roles", roleRoutes);
     app.use("/api/ai", aiRoutes);
+    app.use("/api/client-ai", clientAiRoutes);
 
     app.use("/{*splat}", (req, res) => {
         res.status(404).json({ error: "Not Found" });

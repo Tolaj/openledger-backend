@@ -2,7 +2,14 @@ import Category from "../models/category.model.js";
 import Product from "../models/product.model.js";
 import Group from "../models/group.model.js";
 
-export const getAllCategories = () => Category.find();
+export const getAllCategories = async (groupId) => {
+    if (groupId) {
+        const group = await Group.findById(groupId).select("categories")
+        const ids = group?.categories || []
+        return Category.find({ _id: { $in: ids } })
+    }
+    return Category.find()
+};
 
 export const getCategoryById = async (id) => {
     const cat = await Category.findById(id);

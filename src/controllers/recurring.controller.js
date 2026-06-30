@@ -1,6 +1,36 @@
 import { recurringService } from "../services/index.js";
+import { runDueRecurrings, confirmPendingRun, declinePendingRun, snoozePendingRun } from "../services/recurringRun.service.js";
 
 export const recurringController = {
+    // Triggered by the scheduler (Vercel Cron). Protected by CRON_SECRET.
+    run: async (req, res, next) => {
+        try {
+            const auth = req.headers.authorization || "";
+            const secret = process.env.CRON_SECRET;
+            if (!secret || auth !== `Bearer ${secret}`) {
+                return res.status(401).json({ error: "Unauthorized" });
+            }
+            res.json(await runDueRecurrings());
+        } catch (err) { next(err); }
+    },
+    // User tapped "Yes" on the confirmation notification.
+    confirm: async (req, res, next) => {
+        try {
+            res.json(await confirmPendingRun(req.params.id, req.body.token || req.query.token, req.user?.id));
+        } catch (err) { next(err); }
+    },
+    // User tapped "Snooze".
+    snooze: async (req, res, next) => {
+        try {
+            res.json(await snoozePendingRun(req.params.id, req.body.token || req.query.token, req.user?.id));
+        } catch (err) { next(err); }
+    },
+    // User tapped "Skip".
+    decline: async (req, res, next) => {
+        try {
+            res.json(await declinePendingRun(req.params.id, req.body.token || req.query.token, req.user?.id));
+        } catch (err) { next(err); }
+    },
     getAll: async (req, res, next) => {
         try { res.json(await recurringService.getAllRecurring(req.query.groupId)); }
         catch (err) { next(err); }

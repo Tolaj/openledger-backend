@@ -18,6 +18,7 @@ router.post("/:id/decline", recurringController.decline);
 router.use(requireAuth);
 
 router.get("/",      recurringController.getAll);
+router.get("/logs",  recurringController.logs);
 router.get("/:id",   recurringController.getOne);
 router.post("/",     recurringController.create);
 router.put("/:id",   recurringController.update);

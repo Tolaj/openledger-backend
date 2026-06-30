@@ -35,6 +35,10 @@ export const recurringController = {
         try { res.json(await recurringService.getAllRecurring(req.query.groupId)); }
         catch (err) { next(err); }
     },
+    logs: async (req, res, next) => {
+        try { res.json(await recurringService.getRecurringLogs(req.query.groupId)); }
+        catch (err) { next(err); }
+    },
     getOne: async (req, res, next) => {
         try { res.json(await recurringService.getRecurringById(req.params.id, req.query.groupId)); }
         catch (err) { next(err); }

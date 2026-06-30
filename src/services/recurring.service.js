@@ -1,7 +1,23 @@
 import Recurring from "../models/recurring.model.js";
+import RecurringLog from "../models/recurringLog.model.js";
 
 const populate = (query) =>
     query.populate({ path: "recipient", select: "name email type" });
+
+/** Record one action taken on a recurring (used by the run engine). */
+export const logRecurringAction = (rec, action, summary, scheduledFor) =>
+    RecurringLog.create({
+        group:         rec.group,
+        recurring:     rec._id,
+        recurringName: rec.name,
+        user:          rec.createdBy,
+        action,
+        summary,
+        scheduledFor,
+    }).catch((e) => console.error("[recurring] log failed:", e?.message));
+
+export const getRecurringLogs = (groupId, limit = 200) =>
+    RecurringLog.find({ group: groupId }).sort({ createdAt: -1 }).limit(limit);
 
 export const getAllRecurring = (groupId) =>
     populate(Recurring.find({ group: groupId }).sort({ nextRunDate: 1 }));

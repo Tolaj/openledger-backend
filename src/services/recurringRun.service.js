@@ -3,6 +3,7 @@ import Recurring from "../models/recurring.model.js";
 import Inventory from "../models/inventory.model.js";
 import { writeMovement } from "./stockMovement.service.js";
 import { sendToUser } from "./push.service.js";
+import { logRecurringAction } from "./recurring.service.js";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const startOfDay = (d) => { const x = new Date(d); x.setHours(0, 0, 0, 0); return x; };
@@ -123,8 +124,10 @@ export async function runDueRecurrings(now = new Date()) {
     });
     for (const rec of snoozed) {
         if (rec.pendingRun?.expiresAt && now > new Date(rec.pendingRun.expiresAt)) {
+            const due = rec.pendingRun?.dueDate;
             rec.pendingRun = undefined;        // expired — give up
             await rec.save();
+            await logRecurringAction(rec, "expired", null, due);
             continue;
         }
         rec.pendingRun.snoozedUntil = undefined; // back to "awaiting action"
@@ -156,6 +159,7 @@ export async function runDueRecurrings(now = new Date()) {
             await rec.save();
             result.awaitingConfirm += 1;
             await sendConfirmPush(rec);
+            await logRecurringAction(rec, "asked", null, occ);
             continue;
         }
 
@@ -164,6 +168,7 @@ export async function runDueRecurrings(now = new Date()) {
         rec.lastRunAt = now; rec.lastRunDate = occ;
         await rec.save();
         result.consumed += 1;
+        await logRecurringAction(rec, rec.notifyMode === "notify" ? "notified" : "auto", summarize(lines), occ);
 
         if (rec.notifyMode === "notify" && rec.createdBy) {
             await sendToUser(rec.createdBy, {
@@ -193,9 +198,11 @@ export async function confirmPendingRun(id, token, userId) {
         await rec.save();
         throw Object.assign(new Error("Confirmation expired"), { status: 410 });
     }
+    const due = rec.pendingRun?.dueDate;
     const lines = await consumeStock(rec);
     rec.pendingRun = undefined;
     await rec.save();
+    await logRecurringAction(rec, "confirmed", summarize(lines), due);
     return { ok: true, summary: summarize(lines) };
 }
 
@@ -216,6 +223,7 @@ export async function snoozePendingRun(id, token, userId, minutes = SNOOZE_MINUT
         rec.pendingRun.expiresAt = new Date(until.getTime() + DAY_MS);
     }
     await rec.save();
+    await logRecurringAction(rec, "snoozed", null, rec.pendingRun.dueDate);
     return { ok: true, snoozedUntil: until };
 }
 
@@ -227,8 +235,10 @@ export async function declinePendingRun(id, token, userId) {
         throw Object.assign(new Error("Forbidden"), { status: 403 });
     }
     if (rec.pendingRun?.token === token) {
+        const due = rec.pendingRun?.dueDate;
         rec.pendingRun = undefined;
         await rec.save();
+        await logRecurringAction(rec, "skipped", null, due);
     }
     return { ok: true };
 }

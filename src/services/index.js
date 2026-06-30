@@ -23,7 +23,7 @@ import { getAllSalesInvoices, getSalesInvoiceById, createSalesInvoice, updateSal
 import { getAllRecipients, getRecipientById, createRecipient, updateRecipient, deleteRecipient } from "./recipient.service.js";
 import { getAllGeneralOrders, getGeneralOrderById, createGeneralOrder, updateGeneralOrder, deleteGeneralOrder, getGeneralOrderPDF, sendGeneralOrder } from "./generalOrder.service.js";
 import { getAllGeneralInvoices, getGeneralInvoiceById, createGeneralInvoice, updateGeneralInvoice, deleteGeneralInvoice, getGeneralInvoicePDF, sendGeneralInvoice } from "./generalInvoice.service.js";
-import { getAllRecurring, getRecurringById, createRecurring, updateRecurring, deleteRecurring } from "./recurring.service.js";
+import { getAllRecurring, getRecurringById, createRecurring, updateRecurring, deleteRecurring, getRecurringLogs } from "./recurring.service.js";
 import { getAllMovements, createAdjustment, writeMovement } from "./stockMovement.service.js";
 
 export const authService = { register, login, decodeSession };
@@ -51,5 +51,5 @@ export const salesInvoiceService = { getAllSalesInvoices, getSalesInvoiceById, c
 export const recipientService = { getAllRecipients, getRecipientById, createRecipient, updateRecipient, deleteRecipient };
 export const generalOrderService = { getAllGeneralOrders, getGeneralOrderById, createGeneralOrder, updateGeneralOrder, deleteGeneralOrder, getGeneralOrderPDF, sendGeneralOrder };
 export const generalInvoiceService = { getAllGeneralInvoices, getGeneralInvoiceById, createGeneralInvoice, updateGeneralInvoice, deleteGeneralInvoice, getGeneralInvoicePDF, sendGeneralInvoice };
-export const recurringService = { getAllRecurring, getRecurringById, createRecurring, updateRecurring, deleteRecurring };
+export const recurringService = { getAllRecurring, getRecurringById, createRecurring, updateRecurring, deleteRecurring, getRecurringLogs };
 export const stockMovementService = { getAllMovements, createAdjustment, writeMovement };

@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import Recurring from "../models/recurring.model.js";
 import RecurringLog from "../models/recurringLog.model.js";
 
@@ -23,6 +24,9 @@ export const getAllRecurring = (groupId) =>
     populate(Recurring.find({ group: groupId }).sort({ nextRunDate: 1 }));
 
 export const getRecurringById = async (id, groupId) => {
+    if (!mongoose.isValidObjectId(id)) {
+        throw Object.assign(new Error("Recurring not found"), { status: 404 });
+    }
     const r = await populate(Recurring.findOne({ _id: id, group: groupId }));
     if (!r) throw Object.assign(new Error("Recurring not found"), { status: 404 });
     return r;

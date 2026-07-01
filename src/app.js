@@ -8,13 +8,21 @@ const app = express();
 const ALLOWED_ORIGINS = [
   'http://localhost:5173',
   'http://localhost:5174',
+  'https://openledger.swapniljadhav.com',
+  // extra origins can be added via env (comma-separated)
+  ...(process.env.CORS_ORIGINS ? process.env.CORS_ORIGINS.split(',').map((s) => s.trim()).filter(Boolean) : []),
 ];
-const VERCEL_PATTERN = /^https:\/\/openledger-frontend.*\.vercel\.app$/;
+// Vercel preview/prod deploys and any subdomain of swapniljadhav.com
+const ORIGIN_PATTERNS = [
+  /^https:\/\/openledger-frontend.*\.vercel\.app$/,
+  /^https:\/\/([a-z0-9-]+\.)*swapniljadhav\.com$/,
+];
 
 app.use((req, res, next) => {
   const origin = req.headers.origin;
-  if (origin && (ALLOWED_ORIGINS.includes(origin) || VERCEL_PATTERN.test(origin))) {
+  if (origin && (ALLOWED_ORIGINS.includes(origin) || ORIGIN_PATTERNS.some((re) => re.test(origin)))) {
     res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Vary', 'Origin');
   }
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
